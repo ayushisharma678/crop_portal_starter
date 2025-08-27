@@ -214,6 +214,90 @@ def delete_my_record(user):
     else:
         print("No record found to delete.")
 
+# User Management
+def user_management_menu():
+    while True:
+        print("\n=== User Management ===")
+        print("1. View users")
+        print("2. Update user")
+        print("3. Delete user")
+        print("0. Back")
+        choice = input("Choose: ").strip()
+        if choice == "1":
+            view_users()
+        elif choice == "2":
+            update_user()
+        elif choice == "3":
+            delete_user()
+        elif choice == "0":
+            break
+        else:
+            print("Invalid choice!")
+        pause()
+
+def view_users():
+    users = load_users()
+    print("\n=== Users ===")
+    print_table(users)
+
+def update_user():
+    users = load_users()
+    print_table(users)
+    uid = input("Enter user_id to update: ").strip()
+    if (users["user_id"].astype(str) == uid).any():
+        idx = users.index[users["user_id"].astype(str) == uid][0]
+        print("Leave blank to keep existing value.")
+        for field in ["username", "name", "role"]:
+            cur = users.at[idx, field]
+            val = input(f"{field} [{cur}]: ").strip()
+            if val:
+                users.at[idx, field] = val
+        save_users(users)
+        print("User updated.")
+    else:
+        print("Invalid user_id.")
+
+def delete_user():
+    users = load_users()
+    print_table(users)
+    uid = input("Enter user_id to delete: ").strip()
+    if (users["user_id"].astype(str) == uid).any():
+        users = users[users["user_id"].astype(str) != uid]
+        save_users(users)
+        print("User deleted.")
+    else:
+        print("Invalid user_id.")
+
+# updating admin menu
+def admin_menu(user):
+    while True:
+        print("\n=== Admin Menu ===")
+        print("1. View crops")
+        print("2. Add crop")
+        print("3. Update crop")
+        print("4. Delete crop")
+        print("5. View farmers")
+        print("6. Manage users")   # <-- NEW
+        print("0. Logout")
+        choice = input("Choose: ").strip()
+        if choice == "1":
+            view_crops()
+        elif choice == "2":
+            add_crop()
+        elif choice == "3":
+            update_crop()
+        elif choice == "4":
+            delete_crop()
+        elif choice == "5":
+            view_farmers()
+        elif choice == "6":         # <-- NEW
+            user_management_menu()
+        elif choice == "0":
+            break
+        else:
+            print("Invalid choice!")
+        pause()
+
 # ----------------- Main Loop -----------------
 
 def main():

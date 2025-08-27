@@ -1,0 +1,10 @@
+
+__pycache__/
+venv/
+.env/
+.ipynb_checkpoints/
+.vscode/
+.DS_Store
+Thumbs.db
+data/*.bak.csv
+*.tmp

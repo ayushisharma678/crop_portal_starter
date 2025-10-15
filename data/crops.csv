@@ -2,3 +2,15 @@ crop_id,crop_name,season,price_per_quintal,fertilizer,water_needs
 1,Wheat,Rabi,2200,Urea,Medium
 2,Rice,Kharif,2500,DAP,High
 3,Maize,Kharif,1800,NPK,Medium
+4,Millets
+5,Pulses
+6,Sugarcane
+7,Tea
+8,Coffee
+9,Jute
+10,Mango
+11,Banana
+12,Tomato
+13,Onion
+14,Potato
+15,Grapes

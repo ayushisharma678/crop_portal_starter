@@ -214,6 +214,7 @@ def delete_my_record(user):
     else:
         print("No record found to delete.")
 
+<<<<<<< HEAD
 # User Management
 def user_management_menu():
     while True:
@@ -298,6 +299,8 @@ def admin_menu(user):
             print("Invalid choice!")
         pause()
 
+=======
+>>>>>>> 4c27f91 (Initial commit)
 # ----------------- Main Loop -----------------
 
 def main():

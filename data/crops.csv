@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 crop_id,crop_name,season,profit_per_acre,fertilizer,water_needs
 1,Wheat,Rabi,2200,Urea,Medium
 2,Rice,Kharif,2500,DAP,High
@@ -14,3 +15,9 @@ crop_id,crop_name,season,profit_per_acre,fertilizer,water_needs
 13,Onion
 14,Potato
 15,Grapes
+=======
+crop_id,crop_name,season,price_per_quintal,fertilizer,water_needs
+1,Wheat,Rabi,2200,Urea,Medium
+2,Rice,Kharif,2500,DAP,High
+3,Maize,Kharif,1800,NPK,Medium
+>>>>>>> 4c27f91 (Initial commit)

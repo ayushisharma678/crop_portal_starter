@@ -25,7 +25,7 @@ try:
     CROP_PROFIT_DATA = pd.read_csv(CROP_PROFIT_CSV)
     crop_details_df = pd.read_csv(CROP_DETAILS_CSV)
     CROP_DETAILS = {row["Crop Name"]: {"description": row["Description"]} for idx, row in crop_details_df.iterrows()}
-except Exception as e:  # <-- add this line to close the try-block!
+except Exception as e:  
     print(f"Warning: Error loading crop or details CSV: {e}")
     CROP_PROFIT_DATA = pd.DataFrame()
     CROP_DETAILS = {}
@@ -99,7 +99,6 @@ def register_user():
     users = pd.concat([users, pd.DataFrame([new_user_row])], ignore_index=True)
     save_users(users)
     
-    # If farmer, add farmer info to farmers.csv
     if role == "farmer":
         farmers = load_farmers()
         farmer_id = next_id(farmers, "farmer_id")

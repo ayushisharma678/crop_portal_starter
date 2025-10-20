@@ -71,9 +71,8 @@ def register_user():
     if role not in ["admin", "farmer"]:
         print("❌ Invalid role. Choose either 'admin' or 'farmer'.")
         return
-    
-    # Get contact for farmers
-    contact = "N/A"
+
+    contact, location = "N/A", "N/A"
     if role == "farmer":
         while True:
             contact = input("Enter contact number (10 digits): ").strip()
@@ -85,11 +84,11 @@ def register_user():
                 if retry != "yes":
                     print("Registration cancelled.")
                     return
+        location = input("Enter your location: ").strip()
 
     phash, salt = hash_password(password)
     user_id = next_id(users, "user_id")
-    
-    new_row = {
+    new_user_row = {
         "user_id": user_id,
         "username": username,
         "role": role,
@@ -97,12 +96,30 @@ def register_user():
         "password_hash": phash,
         "salt": salt
     }
-    users = pd.concat([users, pd.DataFrame([new_row])], ignore_index=True)
+    users = pd.concat([users, pd.DataFrame([new_user_row])], ignore_index=True)
     save_users(users)
     
-    print(f"✅ {role.capitalize()} '{username}' registered successfully!")
+    # If farmer, add farmer info to farmers.csv
     if role == "farmer":
+        farmers = load_farmers()
+        farmer_id = next_id(farmers, "farmer_id")
+        new_farmer_row = {
+            "farmer_id": farmer_id,
+            "username": username,
+            "name": name,
+            "location": location,
+            "crop_grown": "",
+            "quantity_quintal": "",
+            "contact": contact
+        }
+        farmers = pd.concat([farmers, pd.DataFrame([new_farmer_row])], ignore_index=True)
+        save_farmers(farmers)
+        print(f"✅ Farmer '{name}' registered successfully!")
         print(f"   Contact: {contact}")
+        print(f"   Location: {location}")
+    else:
+        print(f"✅ Admin '{username}' registered successfully!")
+
 
 def login():
     users = load_users()
@@ -128,6 +145,22 @@ def login():
         return None
 
 # ================= Crop Information Functions =================
+def print_clean_farmers(df):
+    available_farmers = df.reset_index(drop=True)
+    print("\n--- Registered Farmers ---")
+    print(f"{'No.':<3} {'ID':<5} {'Name':<16} {'User':<12} {'Location':<18} {'Crops':<15} {'Qty':<6} {'Contact':<12}")
+    print("-" * 85)
+    for idx, row in available_farmers.iterrows():
+        print(f"{idx+1:<3} "
+              f"{str(row['farmer_id']):<5} "
+              f"{str(row['name'])[:15]:<16} "
+              f"{str(row['username'])[:12]:<12} "
+              f"{str(row['location'])[:17]:<18} "
+              f"{str(row['crop_grown'])[:14]:<15} "
+              f"{str(row['quantity_quintal'])[:6]:<6} "
+              f"{str(row['contact'])[:12]:<12}"
+        )
+
 def view_crop_information():
     """Interactive crop information viewer"""
     while True:
@@ -243,8 +276,9 @@ def view_farmers():
     if farmers.empty:
         print("No farmers registered yet.")
         return
-    print("\n--- Registered Farmers ---")
-    print_table(farmers)
+    print_clean_farmers(farmers)
+
+
 
 def view_update_farmer_contact():
     """View or update farmer contact information"""
@@ -281,6 +315,40 @@ def view_update_farmer_contact():
         print(f"   New contact: {new_contact}")
 
 # ================= Crop Management Functions =================
+def update_farmer():
+    farmers = load_farmers()
+    if farmers.empty:
+        print("No farmers to update.")
+        return
+    print_clean_farmers(farmers)
+    fid = input("Enter farmer_id to update: ").strip()
+    if (farmers["farmer_id"].astype(str) == fid).any():
+        idx = farmers.index[farmers["farmer_id"].astype(str) == fid][0]
+        print("Leave blank to keep existing value.")
+        for field in ["username", "name", "location", "crop_grown", "quantity_quintal", "contact"]:
+            cur = farmers.at[idx, field]
+            val = input(f"{field} [{cur}]: ").strip()
+            if val:
+                farmers.at[idx, field] = val
+        save_farmers(farmers)
+        print("Farmer updated.")
+    else:
+        print("Invalid farmer_id.")
+
+def delete_farmer():
+    farmers = load_farmers()
+    if farmers.empty:
+        print("No farmers to delete.")
+        return
+    print_table(farmers)
+    fid = input("Enter farmer_id to delete: ").strip()
+    if (farmers["farmer_id"].astype(str) == fid).any():
+        farmers = farmers[farmers["farmer_id"].astype(str) != fid]
+        save_farmers(farmers)
+        print("Farmer deleted.")
+    else:
+        print("Invalid farmer_id.")
+
 def add_crop_with_profit(user):
     print("\n--- Add Crop with Profit Calculation ---")
     display_available_crops()
@@ -513,16 +581,50 @@ def upsert_my_record(user):
     print("Saved!")
 
 def delete_my_record(user):
-    farmers = load_farmers()
-    before = len(farmers)
-    farmers = farmers[farmers["username"] != user["username"]]
-    after = len(farmers)
-    save_farmers(farmers)
-    
-    if after < before:
-        print("Your record was deleted.")
+    if not os.path.exists(FARMER_CROPS_CSV):
+        print("No crop records found.")
+        return
+    df = pd.read_csv(FARMER_CROPS_CSV, dtype=str)
+    my_crops = df[df["username"] == user["username"]]
+    if my_crops.empty:
+        print("No crops found for you.")
+        return
+    # Show crops with a number index
+    print("\n--- Your Crops ---")
+    my_crops = my_crops.reset_index(drop=True)
+    for i, row in my_crops.iterrows():
+        print(f"{i+1}. {row['Crop Name']} | Field Size: {row['Field Size (acres)']} acres | Profit Per Acre: {row['Profit Per Acre']}")
+    print("\nType the crop number to delete, or type 'all' to delete all your crops.")
+    ans = input("Delete crop number/all or 'q' to cancel: ").strip().lower()
+    if ans == 'q':
+        print("Cancelled.")
+        return
+    elif ans == 'all':
+        df = df[df["username"] != user["username"]]
+        df.to_csv(FARMER_CROPS_CSV, index=False)
+        print("All your crops have been deleted.")
+        return
     else:
-        print("No record found to delete.")
+        try:
+            idx = int(ans) - 1
+            if idx < 0 or idx >= len(my_crops):
+                print("Invalid crop number.")
+                return
+            # Get the details of the selected crop to delete
+            row_to_delete = my_crops.iloc[idx]
+            match = (
+                (df["username"] == user["username"]) &
+                (df["Crop Name"] == row_to_delete["Crop Name"]) &
+                (df["Field Size (acres)"] == row_to_delete["Field Size (acres)"]) &
+                (df["Profit Per Acre"] == row_to_delete["Profit Per Acre"]) &
+                (df["Estimated Profit"] == row_to_delete["Estimated Profit"])
+            )
+            df = df[~match]
+            df.to_csv(FARMER_CROPS_CSV, index=False)
+            print(f"Crop '{row_to_delete['Crop Name']}' deleted.")
+        except Exception:
+            print("Invalid input. Cancelled.")
+
 
 # ================= Menu Functions =================
 def admin_menu(user):
@@ -530,35 +632,27 @@ def admin_menu(user):
         print(f"\n=== Admin Dashboard ({user['username']}) ===")
         print("1. Register Farmer")
         print("2. View Farmers")
-        print("3. View/Update Farmer Contact")
-
-        print("5. Add Crop with Profit Calculation")
+        print("3. Update Farmer")
+        print("4. Delete Farmer")
+        print("5. View/Update Farmer Contact")
         print("6. View Crop Information Database")
-
-        print("8. Update Crop")
-        print("9. Delete Crop")
-        print("10. Manage Users")
+        print("7. Manage Users")
         print("0. Logout")
         
         choice = input("Enter your choice: ").strip()
-        
         if choice == "1":
             register_farmer()
         elif choice == "2":
             view_farmers()
         elif choice == "3":
-            view_update_farmer_contact()
-
+            update_farmer()
+        elif choice == "4":
+            delete_farmer()
         elif choice == "5":
-            add_crop_with_profit()
+            view_update_farmer_contact()
         elif choice == "6":
             view_crop_information()
-
-        elif choice == "8":
-            update_crop()
-        elif choice == "9":
-            delete_crop()
-        elif choice == "10":
+        elif choice == "7":
             user_management_menu()
         elif choice == "0":
             print("👋 Logging out...")
@@ -567,12 +661,13 @@ def admin_menu(user):
             print("❌ Invalid choice!")
         pause()
 
+
 def farmer_menu(user):
     while True:
         print(f"\n=== Farmer Dashboard ({user['username']}) ===")
         print("1. View Crop Information Database")
         print("2. Add My Crop with Profit Calculation")
-        print("3. Add/Update my crop record")
+        #print("3. Add/Update my crop record")
         print("4. Delete my crop record")
         print("5. View My Crops")
         print("6. Logout")
@@ -583,7 +678,9 @@ def farmer_menu(user):
             view_crop_information()
         elif choice == "2":
             add_crop_with_profit(user)
-        elif choice == "3":
+        #elif choice == "3":
+        #    upsert_my_record(user)
+        elif choice == "4":
             delete_my_record(user)
         elif choice == "4":
             upsert_my_record(user)

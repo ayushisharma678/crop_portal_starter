@@ -203,6 +203,42 @@ def upsert_my_record(user):
     save_farmers(farmers)
     print("Saved!")
 
+def view_my_crops(user):
+    farmers = load_farmers()
+    my_crops = farmers[farmers["username"] == user["username"]]
+    print("\n=== My Crop Records ===")
+    print_table(my_crops)
+    if not my_crops.empty:
+        ans = input("Do you want to delete one of your crops? (y/n): ").strip().lower()
+        if ans == "y":
+            fid = input("Enter farmer_id to delete: ").strip()
+            if (my_crops["farmer_id"].astype(str) == fid).any():
+                farmers = farmers[farmers["farmer_id"].astype(str) != fid]
+                save_farmers(farmers)
+                print("Crop deleted.")
+            else:
+                print("Invalid farmer_id.")
+        else:
+            print("No deletion performed.")
+    else:
+        print("You have no crops recorded.")
+
+def delete_my_account(user):
+    print("\n=== Delete My Account ===")
+    confirm = input("Are you sure? This will delete your account and crop data (y/n): ").strip().lower()
+    if confirm != "y":
+        print("Cancelled.")
+        return
+    users = load_users()
+    farmers = load_farmers()
+
+    users = users[users["username"] != user["username"]]
+    farmers = farmers[farmers["username"] != user["username"]]
+    save_users(users)
+    save_farmers(farmers)
+
+    print("Your account and associated crop records have been deleted successfully.")
+    
 def delete_my_record(user):
     farmers = load_farmers()
     before = len(farmers)
@@ -214,7 +250,6 @@ def delete_my_record(user):
     else:
         print("No record found to delete.")
 
-<<<<<<< HEAD
 # User Management
 def user_management_menu():
     while True:
@@ -299,8 +334,6 @@ def admin_menu(user):
             print("Invalid choice!")
         pause()
 
-=======
->>>>>>> 4c27f91 (Initial commit)
 # ----------------- Main Loop -----------------
 
 def main():

@@ -300,24 +300,24 @@ def view_crop_information():
         print("="*60)
         print("\n--- Available Crops ---")
         
-        # Display crops with numbering
+        
         available_crops = list(CROP_DETAILS.keys())
         for idx, crop_name in enumerate(available_crops, 1):
             profit = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == crop_name]["Profit Per Acre"].values[0]
             season = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == crop_name]["Season"].values[0]
-            print(f"{idx}. {crop_name:<15} | Season: {season:<12} | Profit/Acre: ₹{profit:,}")
+            print(f"{idx:<2} {crop_name:<15} | Season: {season:<12} | Profit/Acre: ₹{profit:,}")
         
-        print(f"\n{len(available_crops) + 1}. Return to Dashboard")
+        print(f"\n{len(available_crops) + 1} Return to Dashboard")
         print("="*60)
         
         choice = input("\nEnter crop number to view detailed information (or return option): ").strip()
         
-        # Check if user wants to return
+        
         if choice == str(len(available_crops) + 1):
             print("Returning to dashboard...\n")
             break
         
-        # Validate choice
+        
         try:
             choice_num = int(choice)
             if 1 <= choice_num <= len(available_crops):
@@ -337,23 +337,23 @@ def view_update_farmer_contact():
         print("No farmers registered yet.")
         return
     
-    # Display all farmers with their contacts
+    
     print("\n--- Registered Farmers ---")
     for idx, row in df.iterrows():
         print(f"{idx + 1}. {row['Farmer Name']:<20} | Contact: {row['Contact']:<12} | Location: {row['Location']}")
     
-    # Option to update contact
+    
     update = input("\nDo you want to update any contact? (yes/no): ").strip().lower()
     
     if update == "yes":
         farmer_name = input("Enter farmer name to update: ").strip()
         
-        # Check if farmer exists
+        
         if farmer_name not in df["Farmer Name"].values:
             print(f"❌ Farmer '{farmer_name}' not found!")
             return
         
-        # Get new contact number
+        
         while True:
             new_contact = input("Enter new contact number (10 digits): ").strip()
             
@@ -362,7 +362,7 @@ def view_update_farmer_contact():
             else:
                 print("❌ Invalid contact number! Please enter exactly 10 digits.")
         
-        # Update the contact
+        
         df.loc[df["Farmer Name"] == farmer_name, "Contact"] = new_contact
         df.to_excel(FARMERS_FILE, index=False)
         
@@ -377,7 +377,7 @@ def display_single_crop_details(crop_name):
     print(f"📋 DETAILED INFORMATION: {crop_name.upper()}")
     print("="*70)
     
-    # Get profit and season information
+    
     crop_profit_info = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == crop_name]
     profit_per_acre = crop_profit_info.iloc[0]["Profit Per Acre"]
     season = crop_profit_info.iloc[0]["Season"]
@@ -386,13 +386,13 @@ def display_single_crop_details(crop_name):
     print(f"🌦️  Best Season: {season}")
     print("\n" + "-"*70)
     
-    # Display detailed description
+    
     description = CROP_DETAILS[crop_name]["description"]
     print(description)
     
     print("\n" + "="*70)
     
-    # Wait for user to read
+    
     input("\nPress Enter to continue...")
 
 
@@ -400,34 +400,34 @@ def add_crop_with_profit():
     print("\n--- Add Crop with Profit Calculation ---")
     farmer = input("Enter farmer name: ")
     
-    # Check if farmer exists
+    
     df_farmers = pd.read_excel(FARMERS_FILE)
     if farmer not in df_farmers["Farmer Name"].values:
         print(f"❌ Farmer '{farmer}' not found! Please register first.")
         return
     
-    # Display available crops
+   
     display_available_crops()
     
-    # Get list of available crop names
+    
     available_crops = CROP_PROFIT_DATA["Crop Name"].tolist()
     print(f"\nAvailable crop choices: {', '.join(available_crops)}")
     
-    # Input crop selection
+    
     crop = input("\nEnter crop name from the list above: ").strip()
     
-    # Check if crop exists in database
+    
     crop_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"].str.lower() == crop.lower()]
     
     if crop_data.empty:
         print(f"❌ Crop '{crop}' not found in our database. Please choose from the available list.")
         return
     
-    # Extract profit per acre for selected crop
+    
     profit_per_acre = crop_data.iloc[0]["Profit Per Acre"]
     recommended_season = crop_data.iloc[0]["Season"]
     
-    # Get user inputs
+    
     quantity = input("Enter quantity (kg): ").strip()
     season = input(f"Enter season (Recommended: {recommended_season}): ").strip()
     
@@ -437,10 +437,10 @@ def add_crop_with_profit():
         print("❌ Invalid field size. Please enter a number.")
         return
     
-    # Calculate total profit
+    
     total_profit = profit_per_acre * field_size
     
-    # Display profit calculation
+    
     print("\n" + "="*50)
     print("💰 PROFIT CALCULATION")
     print("="*50)
@@ -450,11 +450,11 @@ def add_crop_with_profit():
     print(f"Estimated Profit   : ₹{total_profit:,.2f}")
     print("="*50)
     
-    # Seasonal recommendation check
+    
     if season.lower() != recommended_season.lower():
         print(f"⚠️  Warning: Recommended season for {crop} is {recommended_season}")
     
-    # Save crop data with profit information
+    
     df_crops = pd.read_excel(CROPS_FILE)
     new_row = pd.DataFrame([{
         "Farmer Name": farmer,
@@ -485,12 +485,12 @@ def register_user():
         print("⚠️ Username already exists. Try another one.")
         return
     
-    # If registering as farmer, collect phone number
+    
     if role == "farmer":
         while True:
             contact = input("Enter contact number (10 digits): ").strip()
             
-            # Validate phone number
+            
             if len(contact) == 10 and contact.isdigit():
                 break
             else:
@@ -502,7 +502,7 @@ def register_user():
         
         new_user = pd.DataFrame([{"Username": username, "Password": password, "Role": role, "Contact": contact}])
     else:
-        # Admin doesn't need contact
+        
         new_user = pd.DataFrame([{"Username": username, "Password": password, "Role": role, "Contact": "N/A"}])
     
     df = pd.concat([df, new_user], ignore_index=True)
@@ -539,17 +539,17 @@ def register_farmer():
     print("\n--- Register Farmer ---")
     name = input("Enter farmer name: ").strip()
     
-    # Check if farmer already exists
+    
     df = pd.read_excel(FARMERS_FILE)
     if name in df["Farmer Name"].values:
         print(f"⚠️ Farmer '{name}' already registered!")
         return
     
-    # Get and validate contact number
+    
     while True:
         contact = input("Enter contact number (10 digits): ").strip()
         
-        # Validate phone number
+        
         if len(contact) == 10 and contact.isdigit():
             break
         else:
@@ -561,7 +561,7 @@ def register_farmer():
     
     location = input("Enter location: ").strip()
     
-    # Add new farmer
+    
     new_row = pd.DataFrame([{"Farmer Name": name, "Contact": contact, "Location": location}])
     df = pd.concat([df, new_row], ignore_index=True)
     df.to_excel(FARMERS_FILE, index=False)
@@ -626,7 +626,7 @@ def admin_menu(username):
         print(f"\n=== Admin Dashboard ({username}) ===")
         print("1. Register Farmer")
         print("2. View Farmers")
-        print("3. View/Update Farmer Contact")  # New option
+        print("3. View/Update Farmer Contact")  
         print("4. Add Crop (Simple)")
         print("5. Add Crop with Profit Calculation")
         print("6. View Crop Information Database")
@@ -640,7 +640,7 @@ def admin_menu(username):
         elif choice == "2":
             view_farmers()
         elif choice == "3":
-            view_update_farmer_contact()  # New function call
+            view_update_farmer_contact() 
         elif choice == "4":
             add_crop()
         elif choice == "5":
@@ -661,7 +661,7 @@ def farmer_menu(username):
         print(f"\n=== Farmer Dashboard ({username}) ===")
         print("1. Add My Crop (Simple)")
         print("2. Add My Crop with Profit Calculation")
-        print("3. View Crop Information Database")  # Changed from "View Available Crops Database"
+        print("3. View Crop Information Database")  
         print("4. View My Crops")
         print("5. Logout")
         
@@ -672,7 +672,7 @@ def farmer_menu(username):
         elif choice == "2":
             add_crop_with_profit()
         elif choice == "3":
-            view_crop_information()  # Changed function call
+            view_crop_information()  
         elif choice == "4":
             df = pd.read_excel(CROPS_FILE)
             crops = df[df["Farmer Name"].str.lower() == username.lower()]

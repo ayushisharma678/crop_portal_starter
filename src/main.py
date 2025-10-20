@@ -570,6 +570,7 @@ def admin_menu(user):
 def farmer_menu(user):
     while True:
         print(f"\n=== Farmer Dashboard ({user['username']}) ===")
+        print("1. View Crop Information Database")
         print("2. Add My Crop with Profit Calculation")
         print("3. Add/Update my crop record")
         print("4. Delete my crop record")

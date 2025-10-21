@@ -379,7 +379,7 @@ def add_crop_with_profit(user):
     print(f"Estimated Profit   : ₹{total_profit:,.2f}")
     print("="*50)
     
-    # Save farmer crop choice
+  
     if not os.path.exists(FARMER_CROPS_CSV):
         with open(FARMER_CROPS_CSV, "w", encoding="utf-8") as f:
             f.write("username,Crop Name,Field Size (acres),Profit Per Acre,Estimated Profit\n")
@@ -450,7 +450,6 @@ def view_users():
         print("No users registered yet.")
         return
     print("\n--- Registered Users ---")
-    # Hide password hash and salt for security
     display_df = users.drop(columns=["password_hash", "salt"], errors='ignore')
     print_table(display_df)
 
@@ -588,7 +587,6 @@ def delete_my_record(user):
     if my_crops.empty:
         print("No crops found for you.")
         return
-    # Show crops with a number index
     print("\n--- Your Crops ---")
     my_crops = my_crops.reset_index(drop=True)
     for i, row in my_crops.iterrows():
@@ -609,7 +607,6 @@ def delete_my_record(user):
             if idx < 0 or idx >= len(my_crops):
                 print("Invalid crop number.")
                 return
-            # Get the details of the selected crop to delete
             row_to_delete = my_crops.iloc[idx]
             match = (
                 (df["username"] == user["username"]) &
@@ -633,7 +630,7 @@ def admin_menu(user):
         print("2. View Farmers")
         print("3. Update Farmer")
         print("4. Delete Farmer")
-        print("5. View/Update Farmer Contact")
+        #print("5. View/Update Farmer Contact")
         print("6. View Crop Information Database")
         print("7. Manage Users")
         print("0. Logout")
@@ -647,8 +644,8 @@ def admin_menu(user):
             update_farmer()
         elif choice == "4":
             delete_farmer()
-        elif choice == "5":
-            view_update_farmer_contact()
+        #elif choice == "5":
+        #    view_update_farmer_contact()
         elif choice == "6":
             view_crop_information()
         elif choice == "7":
@@ -721,3 +718,4 @@ def main():
 # ================= Run Program =================
 if __name__ == "__main__":
     main()
+

@@ -427,6 +427,30 @@ def update_crop():
     else:
         print("Invalid crop_id.")
 
+def add_crop_record():
+    """Admin: Add a new crop record to database"""
+    print("\n--- Add Crop Record ---")
+    crops = load_crops()
+    
+    crop_id = next_id(crops, "crop_id")
+    crop_name = input("Crop Name: ").strip()
+    season = input("Season: ").strip()
+    price_per_quintal = input("Price per Quintal: ").strip()
+    fertilizer = input("Fertilizer Used: ").strip()
+    water_needs = input("Water Needs: ").strip()
+    
+    new_row = {
+        "crop_id": crop_id,
+        "crop_name": crop_name,
+        "season": season,
+        "price_per_quintal": price_per_quintal,
+        "fertilizer": fertilizer,
+        "water_needs": water_needs
+    }
+    crops = pd.concat([crops, pd.DataFrame([new_row])], ignore_index=True)
+    save_crops(crops)
+    print(f"✅ Crop '{crop_name}' added successfully!")
+
 def delete_crop():
     crops = load_crops()
     if crops.empty:
@@ -578,6 +602,32 @@ def upsert_my_record(user):
     save_farmers(farmers)
     print("Saved!")
 
+def delete_my_account(user):
+    """Delete the user's account and related data"""
+    confirm = input("\n⚠️ Are you sure you want to delete your account permanently? (yes/no): ").strip().lower()
+    if confirm != "yes":
+        print("Cancelled.")
+        return
+
+    # Remove from users.csv
+    users = load_users()
+    users = users[users["username"] != user["username"]]
+    save_users(users)
+
+    # Remove from farmers.csv
+    farmers = load_farmers()
+    farmers = farmers[farmers["username"] != user["username"]]
+    save_farmers(farmers)
+
+    # Remove from farmer_crops.csv
+    if os.path.exists(FARMER_CROPS_CSV):
+        df = pd.read_csv(FARMER_CROPS_CSV, dtype=str)
+        df = df[df["username"] != user["username"]]
+        df.to_csv(FARMER_CROPS_CSV, index=False)
+
+    print("✅ Your account and all associated data have been deleted. Logging out...")
+    sys.exit()
+
 def delete_my_record(user):
     if not os.path.exists(FARMER_CROPS_CSV):
         print("No crop records found.")
@@ -630,9 +680,10 @@ def admin_menu(user):
         print("2. View Farmers")
         print("3. Update Farmer")
         print("4. Delete Farmer")
-        #print("5. View/Update Farmer Contact")
-        print("6. View Crop Information Database")
-        print("7. Manage Users")
+        print("5. Add Crop Record")
+        print("6. Update Crop Record")
+        print("7. View Crop Information Database")
+        print("8. Manage Users")
         print("0. Logout")
         
         choice = input("Enter your choice: ").strip()
@@ -644,11 +695,13 @@ def admin_menu(user):
             update_farmer()
         elif choice == "4":
             delete_farmer()
-        #elif choice == "5":
-        #    view_update_farmer_contact()
+        elif choice == "5":
+            add_crop_record()
         elif choice == "6":
-            view_crop_information()
+            update_crop()
         elif choice == "7":
+            view_crop_information()
+        elif choice == "8":
             user_management_menu()
         elif choice == "0":
             print("👋 Logging out...")
@@ -663,10 +716,11 @@ def farmer_menu(user):
         print(f"\n=== Farmer Dashboard ({user['username']}) ===")
         print("1. View Crop Information Database")
         print("2. Add My Crop with Profit Calculation")
-        #print("3. Add/Update my crop record")
-        print("4. Delete my crop record")
+        print("3. Update My Personal Record (name, location, contact)")
+        print("4. Delete My Crop Record")
         print("5. View My Crops")
-        print("6. Logout")
+        print("6. Delete My Account")
+        print("7. Logout")
         
         choice = input("Enter your choice: ").strip()
         
@@ -674,20 +728,21 @@ def farmer_menu(user):
             view_crop_information()
         elif choice == "2":
             add_crop_with_profit(user)
-        #elif choice == "3":
-        #    upsert_my_record(user)
-        elif choice == "4":
-            delete_my_record(user)
-        elif choice == "4":
+        elif choice == "3":
             upsert_my_record(user)
+        elif choice == "4":
+         delete_my_record(user)
         elif choice == "5":
             view_my_crops(user)
         elif choice == "6":
+            delete_my_account(user)
+        elif choice == "7":
             print("👋 Logging out...")
             break
         else:
             print("❌ Invalid choice!")
         pause()
+
 
 # ================= Main Menu =================
 def main():

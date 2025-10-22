@@ -72,6 +72,10 @@ def admin_menu(user):
         print("3. Update crop")
         print("4. Delete crop")
         print("5. View farmers")
+        print("6. View Crop Profit Data")
+        print("7. Update Crop Profit Data")
+        print("8. View Crop Details")
+        print("9. Update Crop Details")
         print("0. Logout")
         choice = input("Choose: ").strip()
         if choice == "1":
@@ -84,6 +88,14 @@ def admin_menu(user):
             delete_crop()
         elif choice == "5":
             view_farmers()
+        elif choice == "6":
+            view_crop_profit_data()
+        elif choice == "7":
+            update_crop_profit_data()
+        elif choice == "8":
+            view_crop_details()
+        elif choice == "9":
+            update_crop_details()
         elif choice == "0":
             break
         else:
@@ -148,6 +160,54 @@ def view_farmers():
     farmers = load_farmers()
     print("\n=== Farmers ===")
     print_table(farmers)
+
+def view_crop_profit_data():
+    import pandas as pd
+    df = pd.read_csv('data/crop_profit_data.csv')
+    print("\n=== Crop Profit Data ===")
+    print(df)
+
+def update_crop_profit_data():
+    import pandas as pd
+    df = pd.read_csv('data/crop_profit_data.csv')
+    print("\n=== Update Crop Profit Data ===")
+    print(df)
+    crop_name = input("Enter Crop Name to update: ").strip()
+    if crop_name in df["Crop Name"].values:
+        idx = df.index[df["Crop Name"] == crop_name][0]
+        profit = input(f"New Profit Per Acre [{df.at[idx, 'Profit Per Acre']}]: ").strip()
+        season = input(f"New Season [{df.at[idx, 'Season']}]: ").strip()
+        if profit:
+            df.at[idx, 'Profit Per Acre'] = profit
+        if season:
+            df.at[idx, 'Season'] = season
+        df.to_csv('data/crop_profit_data.csv', index=False)
+        print("Crop profit data updated successfully!")
+    else:
+        print("Crop not found!")
+
+def view_crop_details():
+    import pandas as pd
+    df = pd.read_csv('data/crop_details.csv')
+    print("\n=== Crop Details ===")
+    print(df)
+
+def update_crop_details():
+    import pandas as pd
+    df = pd.read_csv('data/crop_details.csv')
+    print("\n=== Update Crop Details ===")
+    print(df)
+    crop_name = input("Enter Crop Name to update: ").strip()
+    if crop_name in df["Crop Name"].values:
+        idx = df.index[df["Crop Name"] == crop_name][0]
+        desc = input(f"New Description [{df.at[idx, 'Description']}]: ").strip()
+        if desc:
+            df.at[idx, 'Description'] = desc
+        df.to_csv('data/crop_details.csv', index=False)
+        print("Crop details updated successfully!")
+    else:
+        print("Crop not found!")
+
 
 # ----------------- Client Menus -----------------
 

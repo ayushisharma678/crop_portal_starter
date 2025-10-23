@@ -575,7 +575,7 @@ def upsert_my_record(user):
     if not farmers.empty and mask.any():
         idx = farmers.index[mask][0]
         print("Updating your existing record. Leave blank to keep current value.")
-        for field in ["name", "location", "crop_grown", "quantity_quintal", "contact"]:
+        for field in ["name", "location", "contact"]:
             cur = farmers.at[idx, field]
             val = input(f"{field} [{cur}]: ").strip()
             if val:
@@ -584,8 +584,6 @@ def upsert_my_record(user):
         print("Creating your crop record.")
         name = input("Full name: ").strip() or user["name"]
         location = input("Location: ").strip()
-        crop_grown = input("Crop grown: ").strip()
-        quantity = input("Quantity (quintal): ").strip()
         contact = input("Contact: ").strip()
         farmer_id = next_id(farmers, "farmer_id")
         new_row = {
@@ -593,8 +591,6 @@ def upsert_my_record(user):
             "username": user["username"],
             "name": name,
             "location": location,
-            "crop_grown": crop_grown,
-            "quantity_quintal": quantity,
             "contact": contact
         }
         farmers = pd.concat([farmers, pd.DataFrame([new_row])], ignore_index=True)

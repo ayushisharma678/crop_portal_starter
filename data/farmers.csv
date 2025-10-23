@@ -1,6 +1,6 @@
 farmer_id,username,name,location,crop_grown,quantity_quintal,contact
 101,rajest87,Rajesh Kumar,Sikkim,Maize,90,9876543210
 102,meena99,Meena Devi,UP,Rice,20,9876501234
-103,neil,neil,/Users/neilsharma/Documents/crop_portal_starter/farmers_guide/.venv/bin/python /Users/neilsharma/Documents/crop_portal_starter/farmers_guide/src/main.py,/Users/neilsharma/Documents/crop_portal_starter/farmers_guide/.venv/bin/python /Users/neilsharma/Documents/crop_portal_starter/farmers_guide/src/main.py,13,4
-104,test,test,delhi,,,1234567690
-105,john31,John Jog,,,,1234567890
+104,test,hi,hi,,,hi
+105,neil,Neil Sharma,Sikkim,,,
+106,test,test,Goa,,,1234567809

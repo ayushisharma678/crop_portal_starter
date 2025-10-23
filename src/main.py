@@ -107,8 +107,6 @@ def register_user():
             "username": username,
             "name": name,
             "location": location,
-            "crop_grown": "",
-            "quantity_quintal": "",
             "contact": contact
         }
         farmers = pd.concat([farmers, pd.DataFrame([new_farmer_row])], ignore_index=True)
@@ -147,7 +145,7 @@ def login():
 def print_clean_farmers(df):
     available_farmers = df.reset_index(drop=True)
     print("\n--- Registered Farmers ---")
-    print(f"{'No.':<3} {'ID':<5} {'Name':<16} {'User':<12} {'Location':<18} {'Crops':<15} {'Qty':<6} {'Contact':<12}")
+    print(f"{'No.':<3} {'ID':<5} {'Name':<16} {'User':<12} {'Location':<18} {'Contact':<12}")
     print("-" * 85)
     for idx, row in available_farmers.iterrows():
         print(f"{idx+1:<3} "
@@ -155,8 +153,6 @@ def print_clean_farmers(df):
               f"{str(row['name'])[:15]:<16} "
               f"{str(row['username'])[:12]:<12} "
               f"{str(row['location'])[:17]:<18} "
-              f"{str(row['crop_grown'])[:14]:<15} "
-              f"{str(row['quantity_quintal'])[:6]:<6} "
               f"{str(row['contact'])[:12]:<12}"
         )
 
@@ -259,8 +255,6 @@ def register_farmer():
         "username": username,
         "name": name,
         "location": location,
-        "crop_grown": "",
-        "quantity_quintal": "",
         "contact": contact
     }
     farmers = pd.concat([farmers, pd.DataFrame([new_row])], ignore_index=True)
@@ -324,7 +318,7 @@ def update_farmer():
     if (farmers["farmer_id"].astype(str) == fid).any():
         idx = farmers.index[farmers["farmer_id"].astype(str) == fid][0]
         print("Leave blank to keep existing value.")
-        for field in ["username", "name", "location", "crop_grown", "quantity_quintal", "contact"]:
+        for field in ["username", "name", "location", "contact"]:
             cur = farmers.at[idx, field]
             val = input(f"{field} [{cur}]: ").strip()
             if val:
@@ -577,14 +571,27 @@ def upsert_my_record(user):
         print("Updating your existing record. Leave blank to keep current value.")
         for field in ["name", "location", "contact"]:
             cur = farmers.at[idx, field]
+            while True:
+                val = input(f"{field} [{cur}]: ").strip()
+                if not val or (len(val) == 10 and val.isdigit()):
+                    break
+                print("❌ Invalid! Enter 10 digits.")
+        else:
             val = input(f"{field} [{cur}]: ").strip()
-            if val:
-                farmers.at[idx, field] = val
+        if val:
+            farmers.at[idx, field] = val
+
+
     else:
         print("Creating your crop record.")
         name = input("Full name: ").strip() or user["name"]
         location = input("Location: ").strip()
-        contact = input("Contact: ").strip()
+        while True:
+            contact = input("Contact (10 digits): ").strip()
+            if len(contact) == 10 and contact.isdigit():
+                break
+            print("❌ Invalid contact number! Please enter exactly 10 digits.")
+
         farmer_id = next_id(farmers, "farmer_id")
         new_row = {
             "farmer_id": farmer_id,

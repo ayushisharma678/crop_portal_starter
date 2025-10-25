@@ -399,40 +399,52 @@ def view_crops():
     print("\n--- Crop Records ---")
     print_table(crops)
 
+def save_crop_files(crops_df):
+    """Save crops to both crop_details and crop_profit CSVs."""
+    crops_df.to_csv(CROP_DETAILS_CSV, index=False)
+    profit_cols = ["crop_id", "crop_name", "price_per_quintal"]
+    if all(col in crops_df.columns for col in profit_cols):
+        CROP_PROFIT_DATA = crops_df[profit_cols].copy()
+        CROP_PROFIT_DATA.to_csv(CROP_PROFIT_CSV, index=False)
+    else:
+        print("⚠️ Some columns missing for profit CSV. Skipping profit update.")
+
 def update_crop():
     crops = load_crops()
     if crops.empty:
         print("No crops to update.")
         return
-        
+
     print_table(crops)
     cid = input("Enter crop_id to update: ").strip()
-    
-    if (crops["crop_id"].astype(str) == cid).any():
-        idx = crops.index[crops["crop_id"].astype(str) == cid][0]
+
+    mask = (crops["crop_id"].astype(str) == cid)
+    if mask.any():
+        idx = crops.index[mask][0]
         print("Leave blank to keep existing value.")
         for field in ["crop_name", "season", "price_per_quintal", "fertilizer", "water_needs"]:
             cur = crops.at[idx, field]
             val = input(f"{field} [{cur}]: ").strip()
             if val:
                 crops.at[idx, field] = val
-        save_crops(crops)
-        print("Crop updated.")
+
+        save_crop_files(crops)
+        print("✅ Crop updated.")
     else:
-        print("Invalid crop_id.")
+        print("❌ Invalid crop_id.")
 
 def add_crop_record():
     """Admin: Add a new crop record to database"""
     print("\n--- Add Crop Record ---")
     crops = load_crops()
-    
+
     crop_id = next_id(crops, "crop_id")
     crop_name = input("Crop Name: ").strip()
     season = input("Season: ").strip()
     price_per_quintal = input("Price per Quintal: ").strip()
     fertilizer = input("Fertilizer Used: ").strip()
     water_needs = input("Water Needs: ").strip()
-    
+
     new_row = {
         "crop_id": crop_id,
         "crop_name": crop_name,
@@ -441,9 +453,11 @@ def add_crop_record():
         "fertilizer": fertilizer,
         "water_needs": water_needs
     }
+
     crops = pd.concat([crops, pd.DataFrame([new_row])], ignore_index=True)
-    save_crops(crops)
-    print(f"✅ Crop '{crop_name}' added successfully!")
+
+    save_crop_files(crops)
+    print(f"✅ Crop '{crop_name}' added successfully !")
 
 def delete_crop():
     crops = load_crops()

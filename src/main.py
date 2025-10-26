@@ -206,28 +206,62 @@ def view_crop_information():
         except ValueError:
             print("❌ Invalid input! Please enter a number.")
 
-# ================= Crop Filter Enhancement =================
-def filter_crops_menu():
-    """Filter crops by season or profit"""
-    print("\n--- Filter Crops ---")
-    season = input("Enter season to filter (or leave blank): ").strip()
-    min_profit = input("Enter minimum profit per acre (or leave blank): ").strip()
-    max_profit = input("Enter maximum profit per acre (or leave blank): ").strip()
+# ================= Search & Filter Crops =================
+def search_and_filter_crops():
+    """Search crops by season and profit range, then view details"""
+    if CROP_PROFIT_DATA.empty:
+        print("No crop data available.")
+        return
+
+    print("\n--- Search & Filter Crops ---")
     
-    df = CROP_PROFIT_DATA.copy()
-    if season:
-        df = df[df["Season"].str.lower() == season.lower()]
-    if min_profit:
+    # Filter by season
+    season_input = input("Enter season to filter (or leave blank for all): ").strip().capitalize()
+    filtered_df = CROP_PROFIT_DATA.copy()
+    if season_input:
+        filtered_df = filtered_df[filtered_df["Season"] == season_input]
+    
+    # Filter by minimum profit
+    min_profit_input = input("Enter minimum profit per acre (or leave blank for no minimum): ").strip()
+    if min_profit_input:
         try:
-            df = df[df["Profit Per Acre"] >= float(min_profit)]
-        except:
-            print(Fore.RED + "Invalid min profit input. Ignored.")
-    if max_profit:
+            min_profit = float(min_profit_input)
+            filtered_df = filtered_df[filtered_df["Profit Per Acre"] >= min_profit]
+        except ValueError:
+            print("Invalid input. Ignoring minimum profit filter.")
+    
+    # Filter by maximum profit
+    max_profit_input = input("Enter maximum profit per acre (or leave blank for no maximum): ").strip()
+    if max_profit_input:
         try:
-            df = df[df["Profit Per Acre"] <= float(max_profit)]
-        except:
-            print(Fore.RED + "Invalid max profit input. Ignored.")
-    print_table(df)
+            max_profit = float(max_profit_input)
+            filtered_df = filtered_df[filtered_df["Profit Per Acre"] <= max_profit]
+        except ValueError:
+            print("Invalid input. Ignoring maximum profit filter.")
+    
+    if filtered_df.empty:
+        print("No crops match your filter criteria.")
+        return
+    
+    # Display filtered crops
+    print("\n--- Filtered Crops ---")
+    for idx, row in filtered_df.iterrows():
+        print(f"{idx+1}. {row['Crop Name']:<15} | Season: {row['Season']:<12} | Profit/Acre: ₹{row['Profit Per Acre']:,}")
+
+    # Let user select a crop to see detailed info
+    choice = input("\nEnter crop number to view details or 'q' to quit: ").strip()
+    if choice.lower() == 'q':
+        return
+    try:
+        choice_num = int(choice)
+        if 1 <= choice_num <= len(filtered_df):
+            selected_crop = filtered_df.iloc[choice_num - 1]["Crop Name"]
+            display_single_crop_details(selected_crop)
+        else:
+            print("Invalid choice.")
+    except ValueError:
+        print("Invalid input.")
+
 
 # ================= Export Reports Enhancement =================
 def export_farmer_crops():
@@ -749,6 +783,23 @@ def delete_my_record(user):
         except Exception:
             print("Invalid input. Cancelled.")
 
+def reports_menu():
+    while True:
+        print("\n=== Reports & Analytics ===")
+        print("1. Export Farmer Crops Report (CSV/Excel)")
+        print("2. Profit Summary Dashboard")
+        print("0. Back to Admin Menu")
+        choice = input("Enter your choice: ").strip()
+
+        if choice == "1":
+            export_farmer_crops_report()
+        elif choice == "2":
+            show_profit_summary_dashboard()
+        elif choice == "0":
+            break
+        else:
+            print("❌ Invalid choice!")
+        pause()
 
 # ================= Menu Functions =================
 def admin_menu(user):
@@ -761,7 +812,9 @@ def admin_menu(user):
         print("5. Add Crop Record")
         print("6. Update Crop Record")
         print("7. View Crop Information Database")
-        print("8. Manage Users")
+        print("8. Search & Filter Crops")
+        print("9. Manage Users")
+        print("10. Reports & Analytics")
         print("0. Logout")
         
         choice = input("Enter your choice: ").strip()
@@ -780,7 +833,11 @@ def admin_menu(user):
         elif choice == "7":
             view_crop_information()
         elif choice == "8":
+            search_and_filter_crops()
+        elif choice == "9":
             user_management_menu()
+        elif choice == "10":
+            reports_menu()
         elif choice == "0":
             print("👋 Logging out...")
             break
@@ -829,9 +886,7 @@ def main():
         print("\n=== 🌾 Crop Management Portal ===")
         print("1. Register User")
         print("2. Login")
-        print("3. Export Farmer Crops Report")
-        print("4. Profit Summary Dashboard")
-        print("5. Exit")
+        print("3. Exit")
 
         choice = input("Enter your choice: ").strip()
 
@@ -845,10 +900,6 @@ def main():
                 else:
                     farmer_menu(user)
         elif choice == "3":
-            export_farmer_crops()
-        elif choice == "4":
-            profit_summary_dashboard()
-        elif choice == "5":
             print("Exiting portal. Goodbye 👋")
             sys.exit()
         else:
@@ -858,3 +909,4 @@ def main():
 if __name__ == "__main__":
 
    main()
+

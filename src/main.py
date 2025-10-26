@@ -4,6 +4,7 @@ import os
 import pandas as pd
 from tabulate import tabulate
 from getpass import getpass
+from colorma import init, Fore, Style
 
 from storage import (
     load_users, save_users,
@@ -13,20 +14,22 @@ from storage import (
 )
 from security import hash_password, verify_password
 
+#-----------------Initialize Colorama---------------
+init(autoreset=True)
+
 # ================= File Paths =================
-
-
 DATA_DIR = "data"
 CROP_PROFIT_CSV = os.path.join(DATA_DIR, "crop_profit_data.csv")
 CROP_DETAILS_CSV = os.path.join(DATA_DIR, "crop_details.csv")
 FARMER_CROPS_CSV = os.path.join(DATA_DIR, "farmer_crops.csv")
 
+#-------------Load Data---------------
 try:
     CROP_PROFIT_DATA = pd.read_csv(CROP_PROFIT_CSV)
     crop_details_df = pd.read_csv(CROP_DETAILS_CSV)
     CROP_DETAILS = {row["Crop Name"]: {"description": row["Description"]} for idx, row in crop_details_df.iterrows()}
-except Exception as e:  
-    print(f"Warning: Error loading crop or details CSV: {e}")
+except Exception as except Exception as e:  
+    print(Fore.YELLOW + f"Warning: Error loading crop or details CSV: {e}")
     CROP_PROFIT_DATA = pd.DataFrame()
     CROP_DETAILS = {}
 
@@ -45,7 +48,7 @@ def pause():
 
 def print_table(df: pd.DataFrame, headers="keys"):
     if df is None or df.empty:
-        print("(no records)")
+        print(Fore.YELLOW + "(no records)")
     else:
         print(tabulate(df, headers=headers, tablefmt="grid", showindex=False))
 
@@ -55,21 +58,33 @@ def display_available_crops():
     for idx, row in CROP_PROFIT_DATA.iterrows():
         print(f"• {row['Crop Name']:<15} | Season: {row['Season']:<12} | Profit/Acre: ₹{row['Profit Per Acre']:,}")
 
+# ================= Password Validation =================
+def is_valid_password(password):
+    # At least one uppercase, lowercase, digit, special character, min 8 chars
+    pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+    return re.match(pattern, password)
+
 # ================= Auth Functions =================
 def register_user():
     users = load_users()
     print("\n=== User Registration ===")
     username = input("Choose a username: ").strip()
     if not users.empty and (users["username"] == username).any():
-        print("Username already exists! Try another.")
+        print(Fore.RED + "Username already exists! Try another.")
         return
     
     name = input("Your full name: ").strip()
-    password = getpass("Choose a password: ").strip()
+
+    while True:
+        password = getpass("Choose a password: ").strip()
+        if not is_valid_password(password):
+            print(Fore.RED + "Password must have at least 1 uppercase, 1 lowercase, 1 digit, 1 special char, min 8 chars")
+        else:
+            break
+            
     role = input("Enter role (admin/farmer): ").strip().lower()
-    
     if role not in ["admin", "farmer"]:
-        print("❌ Invalid role. Choose either 'admin' or 'farmer'.")
+        print(Fore.RED + "❌ Invalid role. Choose either 'admin' or 'farmer'.")
         return
 
     contact, location = "N/A", "N/A"
@@ -79,10 +94,10 @@ def register_user():
             if len(contact) == 10 and contact.isdigit():
                 break
             else:
-                print("❌ Invalid contact number! Please enter exactly 10 digits.")
+                print(Fore.RED + "❌ Invalid contact number! Please enter exactly 10 digits.")
                 retry = input("Try again? (yes/no): ").strip().lower()
                 if retry != "yes":
-                    print("Registration cancelled.")
+                    print(Fore.YELLOW + "Registration cancelled.")
                     return
         location = input("Enter your location: ").strip()
 
@@ -111,11 +126,11 @@ def register_user():
         }
         farmers = pd.concat([farmers, pd.DataFrame([new_farmer_row])], ignore_index=True)
         save_farmers(farmers)
-        print(f"✅ Farmer '{name}' registered successfully!")
+        print(Fore.GREEN + f"✅ Farmer '{name}' registered successfully!")
         print(f"   Contact: {contact}")
         print(f"   Location: {location}")
     else:
-        print(f"✅ Admin '{username}' registered successfully!")
+        print(Fore.GREEN + f"✅ Admin '{username}' registered successfully!")
 
 
 def login():
@@ -125,20 +140,20 @@ def login():
     password = getpass("Password: ").strip()
     
     if users.empty:
-        print("No users found. Please register first.")
+        print(Fore.YELLOW + "No users found. Please register first.")
         return None
         
     row = users[users["username"] == username]
     if row.empty:
-        print("User not found.")
+        print(Fore.RED + "User not found.")
         return None
         
     row = row.iloc[0]
     if verify_password(password, row["password_hash"], row["salt"]):
-        print(f"✅ Welcome, {row['name']}! Role: {row['role']}")
+        print(Fore.GREEN + f"✅ Welcome, {row['name']}! Role: {row['role']}")
         return {"user_id": int(row["user_id"]), "username": row["username"], "name": row["name"], "role": row["role"]}
     else:
-        print("❌ Incorrect password.")
+        print(Fore.RED + "❌ Incorrect password.")
         return None
 
 # ================= Crop Information Functions =================
@@ -190,6 +205,52 @@ def view_crop_information():
                 print("❌ Invalid choice! Please select a valid number.")
         except ValueError:
             print("❌ Invalid input! Please enter a number.")
+
+# ================= Crop Filter Enhancement =================
+def filter_crops_menu():
+    """Filter crops by season or profit"""
+    print("\n--- Filter Crops ---")
+    season = input("Enter season to filter (or leave blank): ").strip()
+    min_profit = input("Enter minimum profit per acre (or leave blank): ").strip()
+    max_profit = input("Enter maximum profit per acre (or leave blank): ").strip()
+    
+    df = CROP_PROFIT_DATA.copy()
+    if season:
+        df = df[df["Season"].str.lower() == season.lower()]
+    if min_profit:
+        try:
+            df = df[df["Profit Per Acre"] >= float(min_profit)]
+        except:
+            print(Fore.RED + "Invalid min profit input. Ignored.")
+    if max_profit:
+        try:
+            df = df[df["Profit Per Acre"] <= float(max_profit)]
+        except:
+            print(Fore.RED + "Invalid max profit input. Ignored.")
+    print_table(df)
+
+# ================= Export Reports Enhancement =================
+def export_farmer_crops():
+    if os.path.exists(FARMER_CROPS_CSV):
+        df = pd.read_csv(FARMER_CROPS_CSV)
+        export_file = os.path.join(DATA_DIR, "farmer_crops_export.xlsx")
+        df.to_excel(export_file, index=False)
+        print(Fore.GREEN + f"✅ Farmer crops exported to {export_file}")
+    else:
+        print(Fore.YELLOW + "No crop records to export.")
+
+# ================= Profit Summary Dashboard Enhancement =================
+def profit_summary_dashboard():
+    if os.path.exists(FARMER_CROPS_CSV):
+        df = pd.read_csv(FARMER_CROPS_CSV)
+        summary = df.groupby("username")["Estimated Profit"].sum().reset_index()
+        total_portal_profit = summary["Estimated Profit"].sum()
+        print("\n--- Profit Summary per Farmer ---")
+        print_table(summary)
+        print(Fore.CYAN + f"Total Portal Expected Profit: ₹{total_portal_profit:,.2f}")
+    else:
+        print(Fore.YELLOW + "No crops to summarize.")
+
 
 def display_single_crop_details(crop_name):
     """Display detailed information for a specific crop"""
@@ -768,7 +829,9 @@ def main():
         print("\n=== 🌾 Crop Management Portal ===")
         print("1. Register User")
         print("2. Login")
-        print("3. Exit")
+        print("3. Export Farmer Crops Report")
+        print("4. Profit Summary Dashboard")
+        print("5. Exit")
 
         choice = input("Enter your choice: ").strip()
 
@@ -782,11 +845,16 @@ def main():
                 else:
                     farmer_menu(user)
         elif choice == "3":
+            export_farmer_crops()
+        elif choice == "4":
+            profit_summary_dashboard()
+        elif choice == "5":
             print("Exiting portal. Goodbye 👋")
             sys.exit()
         else:
-            print("❌ Invalid choice! Try again.")
+            print(Fore.RED + "Invalid choice! Try again.")
 
 # ================= Run Program =================
 if __name__ == "__main__":
+
    main()

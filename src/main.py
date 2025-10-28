@@ -399,65 +399,103 @@ def view_crops():
     print("\n--- Crop Records ---")
     print_table(crops)
 
-def save_crop_files(crops_df):
-    """Save crops to both crop_details and crop_profit CSVs."""
-    crops_df.to_csv(CROP_DETAILS_CSV, index=False)
-    profit_cols = ["crop_id", "crop_name", "price_per_quintal"]
-    if all(col in crops_df.columns for col in profit_cols):
-        CROP_PROFIT_DATA = crops_df[profit_cols].copy()
-        CROP_PROFIT_DATA.to_csv(CROP_PROFIT_CSV, index=False)
-    else:
-        print("⚠️ Some columns missing for profit CSV. Skipping profit update.")
+def add_crop_record():
+    """Admin: Add a new crop record directly to crop_details.csv and crop_profit_data.csv"""
+    print("\n--- Add New Crop Record ---")
+
+  
+    try:
+        crop_details = pd.read_csv(CROP_DETAILS_CSV)
+    except FileNotFoundError:
+        crop_details = pd.DataFrame(columns=["Crop Name", "Description"])
+
+    try:
+        crop_profit = pd.read_csv(CROP_PROFIT_CSV)
+    except FileNotFoundError:
+        crop_profit = pd.DataFrame(columns=["Crop Name", "Profit Per Acre", "Season"])
+
+    crop_name = input("Crop Name: ").strip()
+    description = input("Description: ").strip()
+
+    while True:
+        profit_per_acre = input("Profit Per Acre: ").strip()
+        try:
+            profit_per_acre = float(profit_per_acre)
+            break
+        except ValueError:
+            print("❌ Invalid value! Enter a number for Profit Per Acre.")
+
+    season = input("Season: ").strip()
+
+ 
+    new_details = {"Crop Name": crop_name, "Description": description}
+    crop_details = pd.concat([crop_details, pd.DataFrame([new_details])], ignore_index=True)
+
+    new_profit = {"Crop Name": crop_name, "Profit Per Acre": profit_per_acre, "Season": season}
+    crop_profit = pd.concat([crop_profit, pd.DataFrame([new_profit])], ignore_index=True)
+
+    crop_details.to_csv(CROP_DETAILS_CSV, index=False)
+    crop_profit.to_csv(CROP_PROFIT_CSV, index=False)
+
+    print(f"✅ Crop '{crop_name}' added successfully!")
+
 
 def update_crop():
-    crops = load_crops()
-    if crops.empty:
-        print("No crops to update.")
+    """Admin: Update an existing crop record in crop_details.csv and crop_profit_data.csv"""
+    try:
+        crop_details = pd.read_csv(CROP_DETAILS_CSV)
+    except FileNotFoundError:
+        print("❌ No crop details found.")
         return
 
-    print_table(crops)
-    cid = input("Enter crop_id to update: ").strip()
+    try:
+        crop_profit = pd.read_csv(CROP_PROFIT_CSV)
+    except FileNotFoundError:
+        print("❌ No crop profit data found.")
+        return
 
-    mask = (crops["crop_id"].astype(str) == cid)
-    if mask.any():
-        idx = crops.index[mask][0]
-        print("Leave blank to keep existing value.")
-        for field in ["crop_name", "season", "price_per_quintal", "fertilizer", "water_needs"]:
-            cur = crops.at[idx, field]
-            val = input(f"{field} [{cur}]: ").strip()
-            if val:
-                crops.at[idx, field] = val
+    print("\n--- Existing Crops ---")
+    for idx, row in crop_details.iterrows():
+        print(f"{idx+1}: {row['Crop Name']} | {row['Description'][:30]}...")
 
-        save_crop_files(crops)
-        print("✅ Crop updated.")
-    else:
-        print("❌ Invalid crop_id.")
+    choice = input("Enter crop number to update: ").strip()
+    try:
+        choice_idx = int(choice) - 1
+        if choice_idx < 0 or choice_idx >= len(crop_details):
+            print("❌ Invalid choice!")
+            return
+    except ValueError:
+        print("❌ Invalid input!")
+        return
 
-def add_crop_record():
-    """Admin: Add a new crop record to database"""
-    print("\n--- Add Crop Record ---")
-    crops = load_crops()
+    crop_name_old = crop_details.at[choice_idx, "Crop Name"]
 
-    crop_id = next_id(crops, "crop_id")
-    crop_name = input("Crop Name: ").strip()
-    season = input("Season: ").strip()
-    price_per_quintal = input("Price per Quintal: ").strip()
-    fertilizer = input("Fertilizer Used: ").strip()
-    water_needs = input("Water Needs: ").strip()
+    cur_desc = crop_details.at[choice_idx, "Description"]
+    desc = input(f"Description [{cur_desc}]: ").strip()
+    if desc:
+        crop_details.at[choice_idx, "Description"] = desc
 
-    new_row = {
-        "crop_id": crop_id,
-        "crop_name": crop_name,
-        "season": season,
-        "price_per_quintal": price_per_quintal,
-        "fertilizer": fertilizer,
-        "water_needs": water_needs
-    }
+    profit_idx = crop_profit.index[crop_profit["Crop Name"] == crop_name_old][0]
+    cur_profit = crop_profit.at[profit_idx, "Profit Per Acre"]
+    cur_season = crop_profit.at[profit_idx, "Season"]
 
-    crops = pd.concat([crops, pd.DataFrame([new_row])], ignore_index=True)
+    val_profit = input(f"Profit Per Acre [{cur_profit}]: ").strip()
+    if val_profit:
+        try:
+            val_profit = float(val_profit)
+            crop_profit.at[profit_idx, "Profit Per Acre"] = val_profit
+        except ValueError:
+            print("❌ Invalid number! Profit not updated.")
 
-    save_crop_files(crops)
-    print(f"✅ Crop '{crop_name}' added successfully !")
+    val_season = input(f"Season [{cur_season}]: ").strip()
+    if val_season:
+        crop_profit.at[profit_idx, "Season"] = val_season
+
+    crop_details.to_csv(CROP_DETAILS_CSV, index=False)
+    crop_profit.to_csv(CROP_PROFIT_CSV, index=False)
+
+    print(f"✅ Crop '{crop_details.at[choice_idx, 'Crop Name']}' updated successfully!")
+
 
 def delete_crop():
     crops = load_crops()

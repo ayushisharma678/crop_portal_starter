@@ -3,10 +3,8 @@ farmer_id,username,name,location,crop_grown,quantity_quintal,contact
 101,rajest87,Rajesh Kumar,Sikkim,Maize,90,9876543210
 102,meena99,Meena Devi,UP,Rice,20,9876501234
 104,test,hi,hi,,,hi
-105,neil,Neil Sharma,Sikkim,,,1234567890
+105,neil,Neil Sharma,Haryana,,,9876543210
 106,test,test,Goa,,,1234567809
 107,haana3737,haana,Bengaluru,,,7348857374
-=======,,,,,,
 1,neil,Neil Sharma,hyd,,,5463728190
-2,tester,test,Delhi,,,1234567890
->>>>>>> 44496bad1916b198007118a9e970af4aa1367d57,,,,,,
+9,Noob67,Noob Bot,Banglore,,,1234253647

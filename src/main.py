@@ -68,6 +68,9 @@ def register_user():
         return
     
     name = input("Your full name: ").strip()
+    if not name or len(name) < 2:
+        print(Fore.RED + "❌ Please enter a valid name (at least 2 characters).")
+        return
 
     while True:
         password = getpass("Choose a password: ").strip()
@@ -451,14 +454,22 @@ def update_crop_profit_data_only():
     CROP_PROFIT_DATA.loc[CROP_PROFIT_DATA["Crop Name"] == crop_name, "Profit Per Acre"] = profit_value
     CROP_PROFIT_DATA.to_csv(CROP_PROFIT_CSV, index=False)
     CROP_PROFIT_DATA = pd.read_csv(CROP_PROFIT_CSV)
+
     print()
     print(Fore.GREEN + "="*80)
     print(f"✅ Profit updated successfully for '{crop_name}'!")
     print("="*80)
     print(f"  Old Profit: ₹{old_profit:,.2f}/acre")
     print(f"  New Profit: ₹{profit_value:,.2f}/acre")
-    print(f"  Change:     ₹{profit_value - old_profit:+,.2f}/acre ({((profit_value - old_profit) / old_profit * 100):+.1f}%)")
+
+    change_amount = profit_value - old_profit
+    if old_profit != 0:
+        change_percent = (change_amount / old_profit * 100)
+        print(f"  Change:     ₹{change_amount:+,.2f}/acre ({change_percent:+.1f}%)")
+    else:
+        print(f"  Change:     ₹{change_amount:+,.2f}/acre (New entry)")
     print("="*80)
+
 
 
 def update_farmer():
@@ -729,7 +740,7 @@ def delete_my_account(user):
     save_farmers(farmers)
 
     if os.path.exists(FARMER_CROPS_CSV):
-        df = pd.read_csv(FARMER_CROPS_CSV, dtype=str)
+        df = pd.read_csv(FARMER_CROPS_CSV)
         df = df[df["username"] != user["username"]]
         df.to_csv(FARMER_CROPS_CSV, index=False)
 
@@ -741,6 +752,7 @@ def delete_my_record(user):
         print("No crop records found.")
         return
     df = pd.read_csv(FARMER_CROPS_CSV)
+    df['username'] = df['username'].astype(str)
     my_crops = df[df["username"] == user["username"]]
     if my_crops.empty:
         print("No crops found for you.")

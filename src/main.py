@@ -2,9 +2,10 @@
 import sys
 import os
 import pandas as pd
+import re
 from tabulate import tabulate
 from getpass import getpass
-from colorma import init, Fore, Style
+from colorama import init, Fore, Style
 
 from storage import (
     load_users, save_users,
@@ -28,8 +29,9 @@ try:
     CROP_PROFIT_DATA = pd.read_csv(CROP_PROFIT_CSV)
     crop_details_df = pd.read_csv(CROP_DETAILS_CSV)
     CROP_DETAILS = {row["Crop Name"]: {"description": row["Description"]} for idx, row in crop_details_df.iterrows()}
-except Exception as except Exception as e:  
+except Exception as e:  
     print(Fore.YELLOW + f"Warning: Error loading crop or details CSV: {e}")
+
     CROP_PROFIT_DATA = pd.DataFrame()
     CROP_DETAILS = {}
 
@@ -403,6 +405,39 @@ def view_update_farmer_contact():
         print(f"   New contact: {new_contact}")
 
 # ================= Crop Management Functions =================
+def update_crop_profit_data_only():
+    # Let admin update only the profit-per-acre value for crops
+    if CROP_PROFIT_DATA.empty:
+        print("No crop profit data available.")
+        return
+
+    print("\n--- Update Crop Profit Data ---")
+    print("Available Crops and Current Profits:")
+
+    for idx, row in CROP_PROFIT_DATA.iterrows():
+        print(f"{idx+1}. {row['Crop Name']} | Current Profit Per Acre: ₹{row['Profit Per Acre']} | Season: {row['Season']}")
+    
+    try:
+        sel = int(input("\nEnter crop number to update profit: ").strip())
+        if sel < 1 or sel > len(CROP_PROFIT_DATA):
+            print("Invalid crop number.")
+            return
+    except ValueError:
+        print("Invalid input.")
+        return
+    
+    new_profit = input("Enter NEW Profit Per Acre: ").strip()
+    try:
+        profit_value = float(new_profit)
+    except ValueError:
+        print("Invalid number.")
+        return
+
+    crop_name = CROP_PROFIT_DATA.iloc[sel-1]["Crop Name"]
+    CROP_PROFIT_DATA.loc[CROP_PROFIT_DATA["Crop Name"] == crop_name, "Profit Per Acre"] = profit_value
+    CROP_PROFIT_DATA.to_csv(CROP_PROFIT_CSV, index=False)
+    print(f"✅ Updated profit per acre for '{crop_name}' to ₹{profit_value:,.2f}")
+
 def update_farmer():
     farmers = load_farmers()
     if farmers.empty:
@@ -445,7 +480,7 @@ def add_crop_with_profit(user):
     print(f"\nAvailable crop choices: {', '.join(available_crops)}")
     
     crop = input("\nEnter crop name from the list above: ").strip()
-    crop_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"].str.lower() == crop.lower()]
+    crop_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"].astype(str).str.lower() == crop.lower()]
     if crop_data.empty:
         print(f"❌ Crop '{crop}' not found in our database. Please choose from the available list.")
         return
@@ -504,71 +539,7 @@ def save_crop_files(crops_df):
     else:
         print("⚠️ Some columns missing for profit CSV. Skipping profit update.")
 
-def update_crop():
-    crops = load_crops()
-    if crops.empty:
-        print("No crops to update.")
-        return
 
-    print_table(crops)
-    cid = input("Enter crop_id to update: ").strip()
-
-    mask = (crops["crop_id"].astype(str) == cid)
-    if mask.any():
-        idx = crops.index[mask][0]
-        print("Leave blank to keep existing value.")
-        for field in ["crop_name", "season", "price_per_quintal", "fertilizer", "water_needs"]:
-            cur = crops.at[idx, field]
-            val = input(f"{field} [{cur}]: ").strip()
-            if val:
-                crops.at[idx, field] = val
-
-        save_crop_files(crops)
-        print("✅ Crop updated.")
-    else:
-        print("❌ Invalid crop_id.")
-
-def add_crop_record():
-    """Admin: Add a new crop record to database"""
-    print("\n--- Add Crop Record ---")
-    crops = load_crops()
-
-    crop_id = next_id(crops, "crop_id")
-    crop_name = input("Crop Name: ").strip()
-    season = input("Season: ").strip()
-    price_per_quintal = input("Price per Quintal: ").strip()
-    fertilizer = input("Fertilizer Used: ").strip()
-    water_needs = input("Water Needs: ").strip()
-
-    new_row = {
-        "crop_id": crop_id,
-        "crop_name": crop_name,
-        "season": season,
-        "price_per_quintal": price_per_quintal,
-        "fertilizer": fertilizer,
-        "water_needs": water_needs
-    }
-
-    crops = pd.concat([crops, pd.DataFrame([new_row])], ignore_index=True)
-
-    save_crop_files(crops)
-    print(f"✅ Crop '{crop_name}' added successfully !")
-
-def delete_crop():
-    crops = load_crops()
-    if crops.empty:
-        print("No crops to delete.")
-        return
-        
-    print_table(crops)
-    cid = input("Enter crop_id to delete: ").strip()
-    
-    if (crops["crop_id"].astype(str) == cid).any():
-        crops = crops[crops["crop_id"].astype(str) != cid]
-        save_crops(crops)
-        print("Crop deleted.")
-    else:
-        print("Invalid crop_id.")
 
 # ================= User Management Functions =================
 def view_users():
@@ -680,15 +651,17 @@ def upsert_my_record(user):
         print("Updating your existing record. Leave blank to keep current value.")
         for field in ["name", "location", "contact"]:
             cur = farmers.at[idx, field]
-            while True:
+            if field == "contact":
+                while True:
+                    val = input(f"{field} [{cur}]: ").strip()
+                    if not val or (len(val) == 10 and val.isdigit()):
+                        break
+                    print("❌ Invalid! Enter 10 digits.")
+            else:
                 val = input(f"{field} [{cur}]: ").strip()
-                if not val or (len(val) == 10 and val.isdigit()):
-                    break
-                print("❌ Invalid! Enter 10 digits.")
-        else:
-            val = input(f"{field} [{cur}]: ").strip()
-        if val:
-            farmers.at[idx, field] = val
+            if val:
+                farmers.at[idx, field] = val
+
 
 
     else:
@@ -790,16 +763,16 @@ def reports_menu():
         print("2. Profit Summary Dashboard")
         print("0. Back to Admin Menu")
         choice = input("Enter your choice: ").strip()
-
         if choice == "1":
-            export_farmer_crops_report()
+            export_farmer_crops()
         elif choice == "2":
-            show_profit_summary_dashboard()
+            profit_summary_dashboard()
         elif choice == "0":
             break
         else:
             print("❌ Invalid choice!")
         pause()
+
 
 # ================= Menu Functions =================
 def admin_menu(user):
@@ -809,12 +782,11 @@ def admin_menu(user):
         print("2. View Farmers")
         print("3. Update Farmer")
         print("4. Delete Farmer")
-        print("5. Add Crop Record")
-        print("6. Update Crop Record")
-        print("7. View Crop Information Database")
-        print("8. Search & Filter Crops")
-        print("9. Manage Users")
-        print("10. Reports & Analytics")
+        print("5. View Crop Information Database")
+        print("6. Search & Filter Crops")
+        print("7. Update Crop Profit Data Only")
+        print("8. Manage Users")
+        print("9. Reports & Analytics")
         print("0. Logout")
         
         choice = input("Enter your choice: ").strip()
@@ -827,16 +799,14 @@ def admin_menu(user):
         elif choice == "4":
             delete_farmer()
         elif choice == "5":
-            add_crop_record()
-        elif choice == "6":
-            update_crop()
-        elif choice == "7":
             view_crop_information()
-        elif choice == "8":
+        elif choice == "6":
             search_and_filter_crops()
-        elif choice == "9":
+        elif choice == "7":
+            update_crop_profit_data_only()
+        elif choice == "8":
             user_management_menu()
-        elif choice == "10":
+        elif choice == "9":
             reports_menu()
         elif choice == "0":
             print("👋 Logging out...")
@@ -844,6 +814,8 @@ def admin_menu(user):
         else:
             print("❌ Invalid choice!")
         pause()
+
+
 
 
 def farmer_menu(user):
@@ -907,6 +879,6 @@ def main():
 
 # ================= Run Program =================
 if __name__ == "__main__":
+    main()
 
-   main()
 

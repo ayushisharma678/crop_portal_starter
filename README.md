@@ -42,7 +42,6 @@ Default **admin** login:
 ```
 crop_portal_starter/
 ├─ data/
-│  ├─ crops.csv
 │  ├─ farmers.csv
 │  └─ users.csv
 ├─ src/

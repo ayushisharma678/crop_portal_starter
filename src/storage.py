@@ -5,7 +5,6 @@ import pandas as pd
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
 USERS_CSV = os.path.join(DATA_DIR, "users.csv")
-CROPS_CSV = os.path.join(DATA_DIR, "crops.csv")
 FARMERS_CSV = os.path.join(DATA_DIR, "farmers.csv")
 CROP_PROFIT_CSV = os.path.join(DATA_DIR, "crop_profit_data.csv")
 CROP_DETAILS_CSV = os.path.join(DATA_DIR, "crop_details.csv")
@@ -15,17 +14,21 @@ CROP_DETAILS_CSV = os.path.join(DATA_DIR, "crop_details.csv")
 def ensure_data_files():
     """Create data directory and CSV files with headers if they don't exist."""
     os.makedirs(DATA_DIR, exist_ok=True)
+    
     files_headers = [
         (USERS_CSV, "user_id,username,role,name,password_hash,salt\n"),
-        (CROPS_CSV, "crop_id,crop_name,season,price_per_quintal,fertilizer,water_needs\n"),
-        (FARMERS_CSV, "farmer_id,username,name,location,crop_grown,quantity_quintal,contact\n"),
+        (FARMERS_CSV, "farmer_id,username,name,location,contact\n"),
         (CROP_PROFIT_CSV, "Crop Name,Profit Per Acre,Season\n"),
         (CROP_DETAILS_CSV, "Crop Name,Description\n"),
+        (os.path.join(DATA_DIR, "farmer_crops.csv"), 
+         "username,Crop Name,Field Size (acres),Profit Per Acre,Estimated Profit\n"),
     ]
+    
     for path, header in files_headers:
         if not os.path.exists(path):
             with open(path, "w", encoding="utf-8") as f:
                 f.write(header)
+
 
 # ----------------- Load & Save Functions -----------------
 
@@ -36,35 +39,37 @@ def load_csv(path: str) -> pd.DataFrame:
 def save_csv(df: pd.DataFrame, path: str):
     df.to_csv(path, index=False)
 
-# Users
 def load_users() -> pd.DataFrame:
     return load_csv(USERS_CSV)
 
 def save_users(df: pd.DataFrame):
     save_csv(df, USERS_CSV)
 
-# Crops
 def load_crops() -> pd.DataFrame:
-    return load_csv(CROPS_CSV)
+    """Load farmer_crops.csv data"""
+    farmer_crops_path = os.path.join(DATA_DIR, "farmer_crops.csv")
+    if os.path.exists(farmer_crops_path):
+        return pd.read_csv(farmer_crops_path, dtype=str)
+    return pd.DataFrame()
 
 def save_crops(df: pd.DataFrame):
-    save_csv(df, CROPS_CSV)
+    """Save farmer_crops.csv data"""
+    farmer_crops_path = os.path.join(DATA_DIR, "farmer_crops.csv")
+    save_csv(df, farmer_crops_path)
 
-# Farmers
+
 def load_farmers() -> pd.DataFrame:
     return load_csv(FARMERS_CSV)
 
 def save_farmers(df: pd.DataFrame):
     save_csv(df, FARMERS_CSV)
 
-# Crop Profit
 def load_crop_profit() -> pd.DataFrame:
     return load_csv(CROP_PROFIT_CSV)
 
 def save_crop_profit(df: pd.DataFrame):
     save_csv(df, CROP_PROFIT_CSV)
 
-# Crop Details
 def load_crop_details() -> pd.DataFrame:
     return load_csv(CROP_DETAILS_CSV)
 

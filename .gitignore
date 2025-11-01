@@ -1,10 +1,19 @@
+data/
+*.csv
 
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+
 venv/
-.env/
-.ipynb_checkpoints/
+env/
+ENV/
+
 .vscode/
+.idea/
+*.swp
+*.swo
+
 .DS_Store
 Thumbs.db
-data/*.bak.csv
-*.tmp

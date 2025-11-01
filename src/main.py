@@ -26,7 +26,6 @@ try:
     CROP_DETAILS = {row["Crop Name"]: {"description": row["Description"]} for idx, row in crop_details_df.iterrows()}
 except Exception as e:  
     print(f"Warning: Error loading crop or details CSV: {e}")
-
     CROP_PROFIT_DATA = pd.DataFrame()
     CROP_DETAILS = {}
 
@@ -171,13 +170,15 @@ def view_crop_information():
         print("="*60)
         print("\n--- Available Crops ---")
         
-        available_crops = list(CROP_DETAILS.keys())
+        available_crops = CROP_PROFIT_DATA["Crop Name"].tolist()
+        
         for idx, crop_name in enumerate(available_crops, 1):
             profit_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == crop_name]
             if not profit_data.empty:
                 profit = profit_data["Profit Per Acre"].values[0]
                 season = profit_data["Season"].values[0]
                 print(f"{idx:<2} {crop_name:<15} | Season: {season:<12} | Profit/Acre: ₹{profit:,}")
+        
         print(f"\n0. Return to Dashboard")  
         print("="*60)
         choice = input("\nEnter crop number to view detailed information (or 0 to return): ").strip()  
@@ -194,6 +195,7 @@ def view_crop_information():
                 print("❌ Invalid choice! Please select a valid number.")
         except ValueError:
             print("❌ Invalid input! Please enter a number.")
+
 
 
 # ================= Search & Filter Crops =================

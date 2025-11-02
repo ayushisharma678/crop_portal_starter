@@ -8,7 +8,7 @@ from getpass import getpass
 
 from storage import (
     DATA_DIR,
-    load_users, save_users,
+    load_users, save_users, save_crops,
     load_crops, load_farmers, save_farmers,
     next_id, ensure_data_files
 )
@@ -207,7 +207,7 @@ def search_and_filter_crops():
 
     print("\n--- Search & Filter Crops ---")
     
-    season_input = input("Enter season to filter (Kharif/Rabi/Year-round or leave blank for all): ").strip().capitalize()
+    season_input = input("Enter season to filter (Kharif/Rabi/Year-round/Zaidi or leave blank for all): ").strip().capitalize()
     filtered_df = CROP_PROFIT_DATA.copy()
     if season_input:
         filtered_df = filtered_df[filtered_df["Season"] == season_input]
@@ -555,16 +555,15 @@ def add_crop_with_profit(user):
     
     print(f"\n✅ Crop '{crop}' added with profit calculation saved!")
 
-def view_crops():
+"""def view_crops():
     crops = load_crops()
     if crops.empty:
         print("No crops found yet.")
         return
 
-    print("\n--- Crop Records ---")
+    print("--- Crop Records ---")
     print_table(crops)
-
-<<<<<<< HEAD
+"""
 def add_crop_record():
     """Admin: Add a new crop record directly to crop_details.csv and crop_profit_data.csv"""
     print("\n--- Add New Crop Record ---")
@@ -663,7 +662,7 @@ def update_crop():
     print(f"✅ Crop '{crop_details.at[choice_idx, 'Crop Name']}' updated successfully!")
 
 
-def delete_crop():
+"""def delete_crop():
     crops = load_crops()
     if crops.empty:
         print("No crops to delete.")
@@ -677,9 +676,8 @@ def delete_crop():
         save_crops(crops)
         print("Crop deleted.")
     else:
-        print("Invalid crop_id.")
+        print("Invalid crop_id.")"""
 
-=======
 def save_crop_files(crops_df):
     """Save crops to both crop_details and crop_profit CSVs."""
     global CROP_PROFIT_DATA 
@@ -691,7 +689,6 @@ def save_crop_files(crops_df):
     else:
         print("⚠️ Some columns missing for profit CSV. Skipping profit update.")
 
->>>>>>> 514730fdf167a65a8ca4ba0a0f55f69982400934
 # ================= User Management Functions =================
 def view_users():
     users = load_users()

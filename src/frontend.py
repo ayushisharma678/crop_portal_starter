@@ -155,6 +155,55 @@ def registration_page():
         st.session_state.page = 'login'
         st.rerun()
 
+def format_crop_description(description):
+    """Format crop description by parsing keywords and creating structured display"""
+    if not description:
+        return "No description available."
+    
+    # Define keywords to split on
+    keywords = [
+        "GROWING PROCESS:",
+        "WATER REQUIREMENTS:",
+        "SUNLIGHT REQUIREMENTS:",
+        "SOIL REQUIREMENTS:",
+        "DURATION:",
+        "FERTILIZER NEEDS:"
+    ]
+    
+    # Split the description into sections
+    sections = {}
+    
+    # Get the introduction (text before first keyword)
+    intro_end = len(description)
+    for keyword in keywords:
+        if keyword in description:
+            pos = description.find(keyword)
+            if pos < intro_end:
+                intro_end = pos
+    
+    intro = description[:intro_end].strip()
+    
+    # Extract each section
+    for i, keyword in enumerate(keywords):
+        if keyword in description:
+            start = description.find(keyword) + len(keyword)
+            # Find where this section ends (start of next keyword or end of string)
+            end = len(description)
+            for next_keyword in keywords[i+1:]:
+                if next_keyword in description:
+                    next_pos = description.find(next_keyword)
+                    if next_pos > start:
+                        end = min(end, next_pos)
+                        break
+            
+            section_text = description[start:end].strip()
+            # Clean up the keyword for display
+            clean_keyword = keyword.replace(":", "").title()
+            sections[clean_keyword] = section_text
+    
+    return intro, sections
+
+
 # Login Page
 def login_page():
     st.markdown('<div class="main-header">🌾 Crop Management Portal</div>', unsafe_allow_html=True)
@@ -475,7 +524,19 @@ def view_crop_information_page():
             
             if selected_crop in CROP_DETAILS:
                 st.markdown("### Description")
-                st.info(CROP_DETAILS[selected_crop]["description"])
+                description = CROP_DETAILS[selected_crop]["description"]
+                intro, sections = format_crop_description(description)
+                
+                # Display introduction
+                if intro:
+                    st.info(intro)
+                
+                # Display sections in expanders
+                if sections:
+                    for title, content in sections.items():
+                        with st.expander(f"**{title}**"):
+                            st.write(content)
+
 
 def update_crop_profits_page():
     global CROP_PROFIT_DATA
@@ -687,7 +748,19 @@ def search_filter_crops_page():
             
             if selected_crop in CROP_DETAILS:
                 st.markdown("### Description")
-                st.info(CROP_DETAILS[selected_crop]["description"])
+                description = CROP_DETAILS[selected_crop]["description"]
+                intro, sections = format_crop_description(description)
+                
+                # Display introduction
+                if intro:
+                    st.info(intro)
+                
+                # Display sections in expanders
+                if sections:
+                    for title, content in sections.items():
+                        with st.expander(f"**{title}**"):
+                            st.write(content)
+
 
 def add_my_crop_page():
     st.title("➕ Add My Crop with Profit Calculation")
@@ -752,7 +825,7 @@ def my_crops_page():
     
     df = pd.read_csv(FARMER_CROPS_CSV)
     df['username'] = df['username'].astype(str)
-    my_crops = df[df["username"] == user["username"]]
+    my_crops = df[df["username"] == user["username"]].reset_index(drop=True)  # ✅ Reset index
     
     if my_crops.empty:
         st.info("You haven't added any crops yet.")
@@ -770,7 +843,7 @@ def my_crops_page():
     st.subheader("Delete Crop Record")
     
     if len(my_crops) > 0:
-        # Create a list of crops with index
+        # Create a list of crops with sequential numbering
         crop_options = [f"{idx+1}. {row['Crop Name']} - {row['Field Size (acres)']} acres" 
                        for idx, row in my_crops.iterrows()]
         
@@ -786,22 +859,28 @@ def my_crops_page():
             else:
                 # Extract index from option
                 crop_idx = int(selected_option.split(".")[0]) - 1
-                row_to_delete = my_crops.iloc[crop_idx]
                 
-                st.warning(f"Delete: {row_to_delete['Crop Name']} ({row_to_delete['Field Size (acres)']} acres)")
-                
-                if st.button("🗑️ Delete This Crop", type="primary"):
-                    match = (
-                        (df["username"] == user["username"]) &
-                        (df["Crop Name"] == row_to_delete["Crop Name"]) &
-                        (df["Field Size (acres)"] == row_to_delete["Field Size (acres)"]) &
-                        (df["Profit Per Acre"] == row_to_delete["Profit Per Acre"]) &
-                        (df["Estimated Profit"] == row_to_delete["Estimated Profit"])
-                    )
-                    df = df[~match]
-                    df.to_csv(FARMER_CROPS_CSV, index=False)
-                    st.success(f"✅ Crop '{row_to_delete['Crop Name']}' deleted!")
-                    st.rerun()
+                # ✅ Now this will work because index is reset
+                if crop_idx < len(my_crops):  # ✅ Add safety check
+                    row_to_delete = my_crops.iloc[crop_idx]
+                    
+                    st.warning(f"Delete: {row_to_delete['Crop Name']} ({row_to_delete['Field Size (acres)']} acres)")
+                    
+                    if st.button("🗑️ Delete This Crop", type="primary"):
+                        match = (
+                            (df["username"] == user["username"]) &
+                            (df["Crop Name"] == row_to_delete["Crop Name"]) &
+                            (df["Field Size (acres)"] == row_to_delete["Field Size (acres)"]) &
+                            (df["Profit Per Acre"] == row_to_delete["Profit Per Acre"]) &
+                            (df["Estimated Profit"] == row_to_delete["Estimated Profit"])
+                        )
+                        df = df[~match]
+                        df.to_csv(FARMER_CROPS_CSV, index=False)
+                        st.success(f"✅ Crop '{row_to_delete['Crop Name']}' deleted!")
+                        st.rerun()
+                else:
+                    st.error("❌ Invalid selection. Please try again.")
+
 
 def my_profile_page():
     st.title("👤 My Profile")

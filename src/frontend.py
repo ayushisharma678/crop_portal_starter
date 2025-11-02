@@ -34,7 +34,7 @@ st.markdown("""
     .metric-card {
         background-color: #f0f7f0;
         padding: 1.5rem;
-        border-radius: 10px;
+        border-radius: 10.1px;
         border-left: 5px solid #4caf50;
     }
     .stButton>button {

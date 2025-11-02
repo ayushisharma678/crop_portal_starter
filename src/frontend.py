@@ -273,30 +273,36 @@ def manage_farmers_page():
     
     tab1, tab2, tab3, tab4 = st.tabs(["View All", "Add New", "Update", "Delete"])
     
+ 
     with tab1:
         farmers = load_farmers()
-        if not farmers.empty:
-            st.dataframe(farmers, use_container_width=True)
-        else:
+        if farmers is None or farmers.empty:
             st.info("No farmers registered yet.")
-    
+        else:
+            st.dataframe(farmers, use_container_width=True)
+
     with tab2:
         st.subheader("Add New Farmer")
         with st.form("add_farmer_form"):
             name = st.text_input("Farmer Name*")
-            username = st.text_input("Username")
+            username = st.text_input("Username (optional)")
             location = st.text_input("Location*")
             contact = st.text_input("Contact Number* (10 digits)")
             
             if st.form_submit_button("Add Farmer"):
                 farmers = load_farmers()
-                
+                if farmers is None:
+                    farmers = pd.DataFrame(columns=["farmer_id", "username", "name", "location", "contact"])
+
+                # Validation checks
                 if not name or not location or not contact:
                     st.error("❌ Please fill all required fields!")
                 elif len(contact) != 10 or not contact.isdigit():
                     st.error("❌ Contact must be exactly 10 digits!")
-                elif not farmers.empty and name in farmers["name"].values:
-                    st.error(f"⚠️ Farmer '{name}' already registered!")
+                elif not farmers.empty and (
+                    name in farmers["name"].values or contact in farmers["contact"].values
+                ):
+                    st.error("⚠️ Farmer with same name or contact already registered!")
                 else:
                     farmer_id = next_id(farmers, "farmer_id")
                     new_row = {
@@ -309,16 +315,20 @@ def manage_farmers_page():
                     farmers = pd.concat([farmers, pd.DataFrame([new_row])], ignore_index=True)
                     save_farmers(farmers)
                     st.success(f"✅ Farmer '{name}' registered successfully!")
-    
+                    st.rerun()
+
+
     with tab3:
         st.subheader("Update Farmer")
         farmers = load_farmers()
-        if not farmers.empty:
-            farmer_names = farmers["name"].tolist()
-            selected_farmer = st.selectbox("Select Farmer", farmer_names)
-            
-            farmer_row = farmers[farmers["name"] == selected_farmer].iloc[0]
-            
+        if farmers is None or farmers.empty:
+            st.info("No farmers to update.")
+        else:
+            farmer_ids = farmers["farmer_id"].astype(str).tolist()
+            selected_id = st.selectbox("Select Farmer ID", farmer_ids)
+
+            farmer_row = farmers[farmers["farmer_id"].astype(str) == selected_id].iloc[0]
+
             with st.form("update_farmer_form"):
                 new_username = st.text_input("Username", value=farmer_row["username"])
                 new_name = st.text_input("Name", value=farmer_row["name"])
@@ -329,7 +339,7 @@ def manage_farmers_page():
                     if len(new_contact) != 10 or not new_contact.isdigit():
                         st.error("❌ Contact must be exactly 10 digits!")
                     else:
-                        idx = farmers.index[farmers["name"] == selected_farmer][0]
+                        idx = farmers.index[farmers["farmer_id"].astype(str) == selected_id][0]
                         farmers.at[idx, "username"] = new_username
                         farmers.at[idx, "name"] = new_name
                         farmers.at[idx, "location"] = new_location
@@ -337,26 +347,24 @@ def manage_farmers_page():
                         save_farmers(farmers)
                         st.success("✅ Farmer updated successfully!")
                         st.rerun()
-        else:
-            st.info("No farmers to update.")
-    
+
     with tab4:
         st.subheader("Delete Farmer")
         farmers = load_farmers()
-        if not farmers.empty:
+        if farmers is None or farmers.empty:
+            st.info("No farmers to delete.")
+        else:
             farmer_ids = farmers["farmer_id"].astype(str).tolist()
             selected_id = st.selectbox("Select Farmer ID", farmer_ids)
-            
             farmer_info = farmers[farmers["farmer_id"].astype(str) == selected_id].iloc[0]
-            st.warning(f"You are about to delete: {farmer_info['name']}")
+            
+            st.warning(f"You are about to delete: **{farmer_info['name']}** (ID: {selected_id})")
             
             if st.button("Delete Farmer", type="primary"):
                 farmers = farmers[farmers["farmer_id"].astype(str) != selected_id]
                 save_farmers(farmers)
                 st.success("✅ Farmer deleted successfully!")
                 st.rerun()
-        else:
-            st.info("No farmers to delete.")
 
 def manage_users_page():
     st.title("👥 Manage Users")

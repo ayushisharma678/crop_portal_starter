@@ -478,6 +478,7 @@ def view_crop_information_page():
                 st.info(CROP_DETAILS[selected_crop]["description"])
 
 def update_crop_profits_page():
+    global CROP_PROFIT_DATA
     st.title("💰 Update Crop Profit Data")
     
     if CROP_PROFIT_DATA.empty:
@@ -502,7 +503,6 @@ def update_crop_profits_page():
                                      value=float(current_profit), step=100.0)
         
         if st.button("Update Profit", type="primary"):
-            global CROP_PROFIT_DATA
             CROP_PROFIT_DATA.loc[CROP_PROFIT_DATA["Crop Name"] == selected_crop, "Profit Per Acre"] = new_profit
             CROP_PROFIT_DATA.to_csv(CROP_PROFIT_CSV, index=False)
             

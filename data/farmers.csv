@@ -6,14 +6,15 @@ farmer_id,username,name,location,crop_grown,quantity_quintal,contact
 105,neil,Neil Sharma,Haryana,,,9876543210
 106,test,test,Goa,,,1234567809
 107,haana3737,haana,Bengaluru,,,7348857374
-<<<<<<< HEAD
+<<<<<<< HEAD,,,,,,
 =======,,,,,,
 1,neil,Neil Sharma,hyd,,,5463728190
 2,tester,test,Delhi,,,1234567890
 >>>>>>> 44496bad1916b198007118a9e970af4aa1367d57,,,,,,
 12,ayushisharma678,Ayushi Sharma,Delhi,,,9988776600
-=======
+=======,,,,,,
 1,neil,Neil Sharma,hyd,,,5463728190
 9,Noob67,Noob Bot,Banglore,,,1234253647
 10,govindahari,govinda hari,Meghalaya,,,5463728109
->>>>>>> 514730fdf167a65a8ca4ba0a0f55f69982400934
+>>>>>>> 514730fdf167a65a8ca4ba0a0f55f69982400934,,,,,,
+19,venky_xoxo,venkatesh,Kerala,,,9060925290

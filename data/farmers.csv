@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 farmer_id,username,name,location,crop_grown,quantity_quintal,contact
 <<<<<<< HEAD,,,,,,
 101,rajest87,Rajesh Kumar,Sikkim,Maize,90,9876543210
@@ -18,3 +19,18 @@ farmer_id,username,name,location,crop_grown,quantity_quintal,contact
 10,govindahari,govinda hari,Meghalaya,,,5463728109
 >>>>>>> 514730fdf167a65a8ca4ba0a0f55f69982400934,,,,,,
 19,venky_xoxo,venkatesh,Kerala,,,9060925290
+=======
+farmer_id,username,name,location,contact
+101,rajest87,Rajesh Kumar,Sikkim,9876543210
+102,meena99,Meena Devi,UP,9876501234
+105,neil,Neil Sharma,Haryana,9876543210
+106,test,test,Goa,1234567809
+107,haana3737,haana,Bengaluru,7348857374
+108,neil,Neil Sharma,hyd,5463728190
+109,tester,test,Delhi,1234567890
+110,ayushisharma678,Ayushi Sharma,Delhi,9988776600
+111,neil,Neil Sharma,hyd,5463728190
+112,Noob67,Noob Bot,Banglore,1234253647
+113,govindahari,govinda hari,Meghalaya,5463728109
+114,sharma,sharma neil,Punjab,4321567890
+>>>>>>> f65a53f4f627a1d583a28996b6f64b62da2f1751

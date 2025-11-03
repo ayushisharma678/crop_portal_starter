@@ -43,9 +43,12 @@ Default **admin** login:
 crop_portal_starter/
 ├─ data/
 │  ├─ farmers.csv
+|  ├─ crop_details.csv
+|  ├─ crop_profit_details.csv
 │  └─ users.csv
 ├─ src/
 │  ├─ main.py
+|  ├─ frontend.py
 │  ├─ storage.py
 │  └─ security.py
 ├─ .gitignore

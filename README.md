@@ -46,6 +46,7 @@ crop_portal_starter/
 │  └─ users.csv
 ├─ src/
 │  ├─ main.py
+|  ├─ frontend.py
 │  ├─ storage.py
 │  └─ security.py
 ├─ .gitignore

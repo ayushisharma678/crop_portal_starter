@@ -146,7 +146,7 @@ def registration_page():
 def format_crop_description(description):
     """Format crop description by parsing keywords and creating structured display"""
     if not description:
-        return "No description available."
+        return "No description available.", {}
     
     keywords = [
         "GROWING PROCESS:",
@@ -158,7 +158,6 @@ def format_crop_description(description):
     ]
     
     sections = {}
-    
     intro_end = len(description)
     for keyword in keywords:
         if keyword in description:
@@ -167,7 +166,7 @@ def format_crop_description(description):
                 intro_end = pos
     
     intro = description[:intro_end].strip()
-    
+
     for i, keyword in enumerate(keywords):
         if keyword in description:
             start = description.find(keyword) + len(keyword)
@@ -184,6 +183,7 @@ def format_crop_description(description):
             sections[clean_keyword] = section_text
     
     return intro, sections
+
 def login_page():
     st.markdown('<div class="main-header">🌾 Crop Management Portal</div>', unsafe_allow_html=True)
     
@@ -488,27 +488,20 @@ def view_crop_information_page():
         crop_names = filtered_data["Crop Name"].tolist()
         selected_crop = st.selectbox("Select Crop for Details", crop_names)
         
-        if selected_crop:
-            crop_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == selected_crop].iloc[0]
+        if selected_crop in CROP_DETAILS:
+            st.markdown("### Description")
+            description = CROP_DETAILS[selected_crop]["description"]
+            intro, sections = format_crop_description(description)
             
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Crop Name", crop_data["Crop Name"])
-            with col2:
-                st.metric("Season", crop_data["Season"])
-            with col3:
-                st.metric("Profit Per Acre", f"₹{crop_data['Profit Per Acre']:,.2f}")
-            
-            if selected_crop in CROP_DETAILS:
-                st.markdown("### Description")
-                description = CROP_DETAILS[selected_crop]["description"]
-                intro, sections = format_crop_description(description)
-                if intro:
-                    st.info(intro)
-                if sections:
-                    for title, content in sections.items():
-                        with st.expander(f"**{title}**"):
-                            st.write(content)
+            if intro:
+                st.info(intro)
+                
+            if sections:
+                for title, content in sections.items():
+                    st.markdown(f"**{title}**")
+                    st.write(content)
+                    st.markdown("")  
+
 
 
 def update_crop_profits_page():
@@ -700,27 +693,20 @@ def search_filter_crops_page():
         crop_names = filtered_data["Crop Name"].tolist()
         selected_crop = st.selectbox("View Details", crop_names)
         
-        if selected_crop:
-            crop_data = filtered_data[filtered_data["Crop Name"] == selected_crop].iloc[0]
+        if selected_crop in CROP_DETAILS:
+            st.markdown("### Description")
+            description = CROP_DETAILS[selected_crop]["description"]
+            intro, sections = format_crop_description(description)
+                
+            if intro:
+                st.info(intro)
             
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Crop", crop_data["Crop Name"])
-            with col2:
-                st.metric("Season", crop_data["Season"])
-            with col3:
-                st.metric("Profit/Acre", f"₹{crop_data['Profit Per Acre']:,.2f}")
-            
-            if selected_crop in CROP_DETAILS:
-                st.markdown("### Description")
-                description = CROP_DETAILS[selected_crop]["description"]
-                intro, sections = format_crop_description(description)
-                if intro:
-                    st.info(intro)
-                if sections:
-                    for title, content in sections.items():
-                        with st.expander(f"**{title}**"):
-                            st.write(content)
+            if sections:
+                for title, content in sections.items():
+                    st.markdown(f"**{title}**")
+                    st.write(content)
+                    st.markdown("") 
+
 
 
 def add_my_crop_page():

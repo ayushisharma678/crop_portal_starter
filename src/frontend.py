@@ -10,7 +10,6 @@ from storage import (
 from security import hash_password, verify_password
 import re
 
-# Page configuration
 st.set_page_config(
     page_title="🌾 Crop Management Portal",
     page_icon="🌾",
@@ -18,7 +17,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
 st.markdown("""
 <style>
     .main-header {
@@ -47,14 +45,11 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# Initialize session state
 if 'user' not in st.session_state:
     st.session_state.user = None
 if 'page' not in st.session_state:
     st.session_state.page = 'login'
 
-# Load crop data
 ensure_data_files()
 FARMER_CROPS_CSV = os.path.join(DATA_DIR, "farmer_crops.csv")
 
@@ -68,7 +63,6 @@ except Exception as e:
     CROP_PROFIT_DATA = pd.DataFrame()
     CROP_DETAILS = {}
 
-# Helper functions
 def is_valid_password(password):
     pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
     return re.match(pattern, password)
@@ -77,8 +71,6 @@ def logout():
     st.session_state.user = None
     st.session_state.page = 'login'
     st.rerun()
-
-# Registration Page
 def registration_page():
     st.markdown('<div class="main-header">🌾 User Registration</div>', unsafe_allow_html=True)
     
@@ -103,8 +95,6 @@ def registration_page():
         
         if submitted:
             users = load_users()
-            
-            # Validation
             if not username or not name or not password:
                 st.error("❌ Please fill all required fields!")
             elif not users.empty and (users["username"] == username).any():
@@ -120,7 +110,6 @@ def registration_page():
             elif role == "farmer" and not location:
                 st.error("❌ Location is required for farmers!")
             else:
-                # Create user
                 phash, salt = hash_password(password)
                 user_id = next_id(users, "user_id")
                 new_user_row = {
@@ -134,7 +123,6 @@ def registration_page():
                 users = pd.concat([users, pd.DataFrame([new_user_row])], ignore_index=True)
                 save_users(users)
                 
-                # Create farmer record if applicable
                 if role == "farmer":
                     farmers = load_farmers()
                     farmer_id = next_id(farmers, "farmer_id")
@@ -160,7 +148,6 @@ def format_crop_description(description):
     if not description:
         return "No description available."
     
-    # Define keywords to split on
     keywords = [
         "GROWING PROCESS:",
         "WATER REQUIREMENTS:",
@@ -170,10 +157,8 @@ def format_crop_description(description):
         "FERTILIZER NEEDS:"
     ]
     
-    # Split the description into sections
     sections = {}
     
-    # Get the introduction (text before first keyword)
     intro_end = len(description)
     for keyword in keywords:
         if keyword in description:
@@ -183,11 +168,9 @@ def format_crop_description(description):
     
     intro = description[:intro_end].strip()
     
-    # Extract each section
     for i, keyword in enumerate(keywords):
         if keyword in description:
             start = description.find(keyword) + len(keyword)
-            # Find where this section ends (start of next keyword or end of string)
             end = len(description)
             for next_keyword in keywords[i+1:]:
                 if next_keyword in description:
@@ -197,14 +180,10 @@ def format_crop_description(description):
                         break
             
             section_text = description[start:end].strip()
-            # Clean up the keyword for display
             clean_keyword = keyword.replace(":", "").title()
             sections[clean_keyword] = section_text
     
     return intro, sections
-
-
-# Login Page
 def login_page():
     st.markdown('<div class="main-header">🌾 Crop Management Portal</div>', unsafe_allow_html=True)
     
@@ -245,7 +224,6 @@ def login_page():
             st.session_state.page = 'register'
             st.rerun()
 
-# Admin Dashboard
 def admin_dashboard():
     st.sidebar.title(f"👤 {st.session_state.user['name']}")
     st.sidebar.caption(f"Role: Admin")
@@ -277,8 +255,6 @@ def admin_dashboard():
 
 def admin_dashboard_home():
     st.markdown('<div class="main-header">📊 Admin Dashboard</div>', unsafe_allow_html=True)
-    
-    # Metrics
     users = load_users()
     farmers = load_farmers()
     
@@ -298,8 +274,6 @@ def admin_dashboard_home():
             st.metric("Crop Records", 0)
     
     st.markdown("---")
-    
-    # Recent farmers
     col1, col2 = st.columns(2)
     
     with col1:
@@ -342,8 +316,6 @@ def manage_farmers_page():
                 farmers = load_farmers()
                 if farmers is None:
                     farmers = pd.DataFrame(columns=["farmer_id", "username", "name", "location", "contact"])
-
-                # Validation checks
                 if not name or not location or not contact:
                     st.error("❌ Please fill all required fields!")
                 elif len(contact) != 10 or not contact.isdigit():
@@ -366,7 +338,6 @@ def manage_farmers_page():
                     st.success(f"✅ Farmer '{name}' registered successfully!")
                     st.rerun()
 
-
     with tab3:
         st.subheader("Update Farmer")
         farmers = load_farmers()
@@ -374,7 +345,7 @@ def manage_farmers_page():
             st.info("No farmers to update.")
         else:
             farmer_ids = farmers["farmer_id"].astype(str).tolist()
-            selected_id = st.selectbox("Select Farmer ID", farmer_ids)
+            selected_id = st.selectbox("Select Farmer ID", farmer_ids, key="update_farmer_select") 
 
             farmer_row = farmers[farmers["farmer_id"].astype(str) == selected_id].iloc[0]
 
@@ -396,7 +367,6 @@ def manage_farmers_page():
                         save_farmers(farmers)
                         st.success("✅ Farmer updated successfully!")
                         st.rerun()
-
     with tab4:
         st.subheader("Delete Farmer")
         farmers = load_farmers()
@@ -404,7 +374,7 @@ def manage_farmers_page():
             st.info("No farmers to delete.")
         else:
             farmer_ids = farmers["farmer_id"].astype(str).tolist()
-            selected_id = st.selectbox("Select Farmer ID", farmer_ids)
+            selected_id = st.selectbox("Select Farmer ID", farmer_ids, key="delete_farmer_select")  
             farmer_info = farmers[farmers["farmer_id"].astype(str) == selected_id].iloc[0]
             
             st.warning(f"You are about to delete: **{farmer_info['name']}** (ID: {selected_id})")
@@ -414,6 +384,7 @@ def manage_farmers_page():
                 save_farmers(farmers)
                 st.success("✅ Farmer deleted successfully!")
                 st.rerun()
+
 
 def manage_users_page():
     st.title("👥 Manage Users")
@@ -490,8 +461,7 @@ def view_crop_information_page():
     if CROP_PROFIT_DATA.empty:
         st.warning("No crop data available.")
         return
-    
-    # Search and filter
+
     col1, col2 = st.columns(2)
     
     with col1:
@@ -511,7 +481,6 @@ def view_crop_information_page():
     
     st.dataframe(filtered_data, use_container_width=True)
     
-    # Detailed view
     if not filtered_data.empty:
         st.markdown("---")
         st.subheader("View Detailed Information")
@@ -534,12 +503,8 @@ def view_crop_information_page():
                 st.markdown("### Description")
                 description = CROP_DETAILS[selected_crop]["description"]
                 intro, sections = format_crop_description(description)
-                
-                # Display introduction
                 if intro:
                     st.info(intro)
-                
-                # Display sections in expanders
                 if sections:
                     for title, content in sections.items():
                         with st.expander(f"**{title}**"):
@@ -602,8 +567,6 @@ def reports_analytics_page():
                 st.markdown("---")
                 st.subheader("Profit by Farmer")
                 st.dataframe(summary, use_container_width=True)
-                
-                # Chart
                 st.bar_chart(summary.set_index("Farmer"))
             else:
                 st.info("No crop records to analyze.")
@@ -625,8 +588,6 @@ def reports_analytics_page():
             )
         else:
             st.info("No data to export.")
-
-# Farmer Dashboard
 def farmer_dashboard():
     st.sidebar.title(f"👤 {st.session_state.user['name']}")
     st.sidebar.caption(f"Role: Farmer")
@@ -660,8 +621,6 @@ def farmer_dashboard_home():
     st.markdown('<div class="main-header">📊 Farmer Dashboard</div>', unsafe_allow_html=True)
     
     user = st.session_state.user
-    
-    # Load my crops
     if os.path.exists(FARMER_CROPS_CSV):
         df = pd.read_csv(FARMER_CROPS_CSV)
         df['username'] = df['username'].astype(str)
@@ -738,8 +697,6 @@ def search_filter_crops_page():
     else:
         st.success(f"Found {len(filtered_data)} crops matching your criteria")
         st.dataframe(filtered_data, use_container_width=True)
-        
-        # Detailed view
         crop_names = filtered_data["Crop Name"].tolist()
         selected_crop = st.selectbox("View Details", crop_names)
         
@@ -758,12 +715,8 @@ def search_filter_crops_page():
                 st.markdown("### Description")
                 description = CROP_DETAILS[selected_crop]["description"]
                 intro, sections = format_crop_description(description)
-                
-                # Display introduction
                 if intro:
                     st.info(intro)
-                
-                # Display sections in expanders
                 if sections:
                     for title, content in sections.items():
                         with st.expander(f"**{title}**"):
@@ -792,8 +745,6 @@ def add_my_crop_page():
             crop_data = CROP_PROFIT_DATA[CROP_PROFIT_DATA["Crop Name"] == selected_crop].iloc[0]
             profit_per_acre = float(crop_data["Profit Per Acre"])
             total_profit = profit_per_acre * field_size
-            
-            # Show calculation
             st.success("💰 Profit Calculation")
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -802,8 +753,6 @@ def add_my_crop_page():
                 st.metric("Field Size", f"{field_size} acres")
             with col3:
                 st.metric("Total Profit", f"₹{total_profit:,.2f}")
-            
-            # Save to CSV
             if not os.path.exists(FARMER_CROPS_CSV):
                 with open(FARMER_CROPS_CSV, "w", encoding="utf-8") as f:
                     f.write("username,Crop Name,Field Size (acres),Profit Per Acre,Estimated Profit\n")
@@ -833,16 +782,13 @@ def my_crops_page():
     
     df = pd.read_csv(FARMER_CROPS_CSV)
     df['username'] = df['username'].astype(str)
-    my_crops = df[df["username"] == user["username"]].reset_index(drop=True)  # ✅ Reset index
+    my_crops = df[df["username"] == user["username"]].reset_index(drop=True)  
     
     if my_crops.empty:
         st.info("You haven't added any crops yet.")
         return
-    
-    # Display crops
     st.dataframe(my_crops, use_container_width=True)
-    
-    # Total profit
+
     my_crops['Estimated Profit'] = pd.to_numeric(my_crops['Estimated Profit'], errors='coerce')
     total = my_crops['Estimated Profit'].sum()
     st.metric("💰 Total Expected Profit", f"₹{total:,.2f}")
@@ -851,7 +797,6 @@ def my_crops_page():
     st.subheader("Delete Crop Record")
     
     if len(my_crops) > 0:
-        # Create a list of crops with sequential numbering
         crop_options = [f"{idx+1}. {row['Crop Name']} - {row['Field Size (acres)']} acres" 
                        for idx, row in my_crops.iterrows()]
         
@@ -865,11 +810,8 @@ def my_crops_page():
                     st.success("✅ All your crops have been deleted!")
                     st.rerun()
             else:
-                # Extract index from option
                 crop_idx = int(selected_option.split(".")[0]) - 1
-                
-                # ✅ Now this will work because index is reset
-                if crop_idx < len(my_crops):  # ✅ Add safety check
+                if crop_idx < len(my_crops):  
                     row_to_delete = my_crops.iloc[crop_idx]
                     
                     st.warning(f"Delete: {row_to_delete['Crop Name']} ({row_to_delete['Field Size (acres)']} acres)")
@@ -957,17 +899,14 @@ def my_profile_page():
         
         if confirm_delete:
             if st.button("🗑️ Delete My Account", type="primary"):
-                # Delete user
                 users = load_users()
                 users = users[users["username"] != user["username"]]
                 save_users(users)
                 
-                # Delete farmer record
                 farmers = load_farmers()
                 farmers = farmers[farmers["username"] != user["username"]]
                 save_farmers(farmers)
                 
-                # Delete crop records
                 if os.path.exists(FARMER_CROPS_CSV):
                     df = pd.read_csv(FARMER_CROPS_CSV)
                     df = df[df["username"] != user["username"]]
@@ -976,7 +915,6 @@ def my_profile_page():
                 st.success("✅ Your account has been deleted.")
                 logout()
 
-# Main App
 def main():
     ensure_data_files()
     

@@ -1,2 +1,9 @@
 pandas
 tabulate
+binascii
+streamlit
+sys
+os
+re
+getpass
+hashlib

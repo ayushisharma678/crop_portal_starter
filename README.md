@@ -31,7 +31,7 @@ python src/main.py
 
 Default **admin** login:
 - username: `admin`
-- password: `admin123`
+- password: `admin`
 
 > You can change or add more admins in `data/users.csv` (passwords are stored as hashes).
 
